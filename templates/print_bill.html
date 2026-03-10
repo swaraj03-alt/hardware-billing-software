@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SR Steel Bill</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:white;
+margin:0;
+padding:0;
+}
+
+.bill{
+width:760px;
+margin:auto;
+padding:15px;
+color:#b4363c;
+}
+
+.header{
+text-align:center;
+position:relative;
+}
+
+.shop{
+font-size:48px;
+font-weight:bold;
+letter-spacing:3px;
+}
+
+.mob{
+position:absolute;
+right:0;
+top:5px;
+text-align:right;
+font-size:16px;
+}
+
+.address{
+margin-top:5px;
+font-size:15px;
+}
+
+.billtop{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+font-size:16px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #b4363c;
+padding:6px;
+font-size:15px;
+}
+
+th{
+text-align:center;
+}
+
+.right{
+text-align:right;
+}
+
+.blank{
+height:28px;
+}
+
+.summary{
+width:260px;
+margin-left:auto;
+margin-top:10px;
+}
+
+.summary td{
+border:1px solid #b4363c;
+}
+
+.footer{
+margin-top:20px;
+font-size:14px;
+}
+
+.sign{
+text-align:right;
+margin-top:25px;
+}
+
+button{
+padding:6px 12px;
+margin:5px;
+}
+
+@media print{
+button{display:none}
+}
+
+</style>
+
+<script>
+
+function downloadPDF(){
+
+let element=document.querySelector(".bill");
+
+let opt={
+margin:5,
+filename:'SR_Steel_Bill_{{bill.id}}.pdf',
+image:{type:'jpeg',quality:0.98},
+html2canvas:{scale:2},
+jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+};
+
+html2pdf().set(opt).from(element).save();
+
+}
+
+function sendWhatsApp(){
+
+downloadPDF();
+
+setTimeout(function(){
+
+let phone="{{bill.customer_mobile}}";
+
+let msg="SR Steel Bill #{{bill.id}} generated.\nPlease attach the downloaded bill.";
+
+window.open("https://wa.me/91"+phone+"?text="+encodeURIComponent(msg));
+
+},2000);
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div style="text-align:right">
+<button onclick="window.print()">Print</button>
+<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="sendWhatsApp()">Download + WhatsApp</button>
+</div>
+
+<div class="bill">
+
+<div class="header">
+
+<div class="shop">SR Steel</div>
+
+<div class="mob">
+Mo. 9822714827<br>
+7020005481
+</div>
+
+<div class="address">
+कवितकर मंगल कार्यालय के बाजू, अकोट रोड, सूर्जी अंजनगांव<br>
+टिन पत्रे, अँगल, सलाख, पाइप के चिल्लर और ठोक विक्रेता
+</div>
+
+</div>
+
+<div class="billtop">
+
+<div>
+<b>नं:</b> {{bill.id}}
+</div>
+
+<div>
+<b>ता:</b> {{bill.created_at.strftime("%d-%m-%Y")}}
+<b>समय:</b> {{bill.created_at.strftime("%H:%M")}}
+</div>
+
+</div>
+
+<div style="margin-top:6px;font-size:16px">
+<b>नाम:</b> {{bill.customer_name}}
+</div>
+
+<table>
+
+<tr>
+<th width="45%">विवरण</th>
+<th width="20%">क्विंटल / नग</th>
+<th width="15%">दर</th>
+<th width="20%">रकम</th>
+</tr>
+
+{% set rows=10 %}
+{% set used=items|length %}
+
+{% for item in items %}
+
+{% set amt=item.quantity * item.rate %}
+
+<tr>
+<td>{{ item.product_name or '' }}</td>
+<td>{{item.quantity}} {{item.unit}}</td>
+<td class="right">{{item.rate}}</td>
+<td class="right">{{amt}}</td>
+</tr>
+
+{% endfor %}
+
+{% for i in range(rows-used) %}
+<tr class="blank">
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+{% endfor %}
+
+</table>
+
+<table class="summary">
+
+<tr>
+<td>हमाली</td>
+<td class="right">{{hamali_total}}</td>
+</tr>
+
+<tr>
+<td>भाडा</td>
+<td class="right">{{bhada}}</td>
+</tr>
+
+<tr>
+<td><b>टोटल</b></td>
+<td class="right"><b>{{bill.total_amount}}</b></td>
+</tr>
+
+<tr>
+<td>जमा</td>
+<td class="right">{{bill.paid_amount}}</td>
+</tr>
+
+<tr>
+<td><b>बाकी</b></td>
+<td class="right"><b>{{bill.balance_amount}}</b></td>
+</tr>
+
+</table>
+
+<div class="footer">
+
+<b>धन्यवाद !</b>
+
+<br><br>
+
+टिप :<br>
+* बेचा हुआ माल वापस नहीं लिया जायेगा<br>
+* फैशन के इस दौर में गारंटी की इच्छा ना करे
+
+</div>
+
+<div class="sign">
+सही
+</div>
+
+</div>
+
+</body>
+</html>

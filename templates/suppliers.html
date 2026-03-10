@@ -1,0 +1,565 @@
+{% include 'sidebar.html' %}
+
+<style>
+
+:root{
+--bg:#f4f6fb;
+--card:#ffffff;
+--dark:#0f172a;
+--muted:#64748b;
+--primary:#2563eb;
+--success:#10b981;
+--danger:#ef4444;
+--border:#e2e8f0;
+--shadow:0 8px 25px rgba(0,0,0,.05);
+}
+
+body{
+background:var(--bg);
+font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+/* MAIN CONTENT */
+
+.main-content{
+margin-left:270px;
+padding:30px;
+min-height:100vh;
+transition:.3s;
+}
+
+/* Tablet */
+@media(max-width:1024px){
+.main-content{
+margin-left:0;
+padding:20px;
+}
+}
+
+/* Mobile */
+@media(max-width:600px){
+.main-content{
+padding:15px;
+}
+}
+
+@media(max-width:768px){
+
+.table tbody tr td{
+flex-direction:column;
+align-items:flex-start;
+gap:4px;
+}
+
+.table tbody tr td:last-child{
+flex-direction:row;
+flex-wrap:wrap;
+gap:6px;
+}
+
+.btn-main{
+font-size:11px;
+padding:6px 10px;
+}
+
+}
+
+
+/* TOP CARD */
+
+.stat-banner{
+background:linear-gradient(135deg,#1e293b,#0f172a);
+color:white;
+border-radius:18px;
+padding:24px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+box-shadow:var(--shadow);
+}
+
+.banner-label{
+font-size:12px;
+text-transform:uppercase;
+color:#94a3b8;
+font-weight:700;
+}
+
+.amount-text{
+font-size:32px;
+font-weight:800;
+margin-top:4px;
+}
+
+/* CARD */
+
+.card-box{
+background:white;
+border-radius:16px;
+padding:25px;
+box-shadow:var(--shadow);
+}
+
+/* HEADER */
+
+.table-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:12px;
+margin-bottom:20px;
+}
+
+/* Mobile */
+
+@media(max-width:600px){
+
+.table-header{
+flex-direction:column;
+align-items:stretch;
+}
+
+.action-buttons{
+width:100%;
+}
+
+.btn-add{
+width:100%;
+}
+
+.search-box{
+width:100%;
+}
+
+.search-box input{
+width:100%;
+}
+
+}
+/* BUTTONS */
+
+.btn-main{
+border:none;
+padding:8px 14px;
+border-radius:8px;
+font-weight:700;
+font-size:12px;
+cursor:pointer;
+transition:.2s;
+}
+
+.btn-main:hover{
+transform:translateY(-1px);
+box-shadow:0 4px 10px rgba(0,0,0,.1);
+}
+
+.btn-add{background:#2563eb;color:white;}
+.btn-edit{background:#eff6ff;color:#2563eb;}
+.btn-delete{background:#fef2f2;color:#ef4444;}
+.btn-pay{background:#ecfdf5;color:#10b981;}
+.btn-ledger{background:#f1f5f9;color:#334155;}
+
+.action-buttons{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+}
+
+/* SEARCH */
+
+.search-box{
+position:relative;
+}
+
+.search-box input{
+border:none;
+background:#f1f5f9;
+padding:10px 14px 10px 36px;
+border-radius:10px;
+font-weight:600;
+}
+
+.search-box i{
+position:absolute;
+left:12px;
+top:50%;
+transform:translateY(-50%);
+color:var(--muted);
+}
+
+/* TABLE */
+
+.table{
+width:100%;
+border-collapse:separate;
+border-spacing:0 8px;
+}
+
+.table thead th{
+font-size:11px;
+text-transform:uppercase;
+font-weight:800;
+color:var(--muted);
+border:none;
+padding:10px;
+}
+
+.table tbody tr td{
+background:#fbfcfd;
+padding:14px;
+border-top:1px solid var(--border);
+border-bottom:1px solid var(--border);
+}
+
+/* RESPONSIVE */
+
+.table-responsive{
+width:100%;
+overflow-x:auto;
+}
+
+@media(max-width:768px){
+
+.main-content{
+margin-left:0;
+padding:15px;
+}
+
+.stat-banner{
+flex-direction:column;
+align-items:flex-start;
+gap:10px;
+}
+
+.table thead{
+display:none;
+}
+
+.table tbody tr{
+display:block;
+margin-bottom:12px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.table tbody tr td{
+display:flex;
+justify-content:space-between;
+border:none;
+padding:10px;
+}
+
+.table tbody tr td::before{
+content:attr(data-label);
+font-weight:700;
+color:#64748b;
+}
+
+}
+
+</style>
+
+<div class="main-content">
+
+<div class="stat-banner">
+
+<div>
+<div class="banner-label">Total Supplier Payable</div>
+<div class="amount-text">
+₹{{ "{:,.2f}".format(total_payable or 0) }}</div>
+</div>
+
+<div style="font-size:28px">
+<i class="fas fa-truck-loading"></i>
+</div>
+
+</div>
+
+<div class="card-box">
+
+<div class="table-header">
+
+<h4 style="font-weight:800;margin:0">
+Suppliers
+</h4>
+
+<div class="action-buttons">
+
+<button class="btn-main btn-add"
+onclick="window.location='/add-supplier'">
+<i class="fas fa-plus"></i> Add Supplier
+</button>
+
+</div>
+
+<div class="search-box">
+<i class="fas fa-search"></i>
+
+<input type="text"
+id="search"
+placeholder="Search supplier..."
+onkeyup="filterTable()">
+
+</div>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table" id="supplierTable">
+
+<thead>
+<tr>
+<th></th>
+<th>Supplier Name</th>
+<th>Mobile</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for s in suppliers %}
+
+<tr>
+
+<td data-label="Select">
+<input type="checkbox"
+class="supplierCheck"
+value="{{ s.id }}">
+</td>
+
+<td data-label="Supplier Name" style="font-weight:700">
+{{ s.name }}
+</td>
+
+<td data-label="Mobile">
+{{ s.mobile }}
+</td>
+
+<td data-label="Actions">
+
+<button class="btn-main btn-edit" onclick="editSupplier()">
+✏ Edit
+</button>
+
+<button class="btn-main btn-delete" onclick="deleteSupplier()">
+🗑 Delete
+</button>
+
+<button class="btn-main btn-pay" onclick="paySupplier()">
+💰 Pay
+</button>
+
+<button class="btn-main btn-ledger" onclick="viewLedger()">
+📒 Ledger
+</button>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- EDIT SUPPLIER MODAL -->
+
+<div id="editModal"
+style="display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.5);
+z-index:9999;
+align-items:center;
+justify-content:center;">
+
+<div style="
+background:white;
+padding:25px;
+border-radius:12px;
+width:420px;
+max-width:420px;
+box-shadow:0 10px 40px rgba(0,0,0,.2);
+">
+
+<h4 style="margin-bottom:15px;font-weight:800">
+Edit Supplier
+</h4>
+
+<input type="hidden" id="edit_id">
+
+<div style="margin-bottom:10px">
+<label>Name</label>
+<input id="edit_name" class="form-control" style="width:100%">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Mobile</label>
+<input id="edit_mobile" class="form-control" style="width:100%">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Address</label>
+<input id="edit_address" class="form-control" style="width:100%">
+</div>
+
+<div style="display:flex;gap:10px;margin-top:15px">
+
+<button onclick="saveSupplier()" class="btn-main btn-add">
+Save
+</button>
+
+<button onclick="closeModal()" class="btn-main btn-delete">
+Cancel
+</button>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+function saveSupplier(){
+
+let id=document.getElementById("edit_id").value;
+
+let formData=new FormData();
+
+formData.append("name",document.getElementById("edit_name").value);
+formData.append("mobile",document.getElementById("edit_mobile").value);
+formData.append("address",document.getElementById("edit_address").value);
+
+fetch("/update-supplier/"+id,{
+method:"POST",
+body:formData
+})
+.then(res=>res.json())
+.then(data=>{
+if(data.success){
+alert("Supplier updated successfully");
+location.reload();
+}
+else{
+alert("Update failed");
+}
+});
+
+}
+
+function getSelectedSupplier(){
+
+let checks=document.querySelectorAll(".supplierCheck:checked");
+
+if(checks.length===0){
+alert("Select supplier");
+return null;
+}
+
+return checks[0].value;
+
+}
+
+function closeModal(){
+document.getElementById("editModal").style.display="none";
+}
+
+function editSupplier(){
+
+let id=getSelectedSupplier();
+if(!id)return;
+
+fetch("/get-supplier/"+id)
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("edit_id").value=data.id;
+document.getElementById("edit_name").value=data.name;
+document.getElementById("edit_mobile").value=data.mobile;
+document.getElementById("edit_address").value=data.address;
+
+document.getElementById("editModal").style.display="flex";
+
+});
+
+}
+
+function deleteSupplier(){
+
+let id=getSelectedSupplier();
+if(!id)return;
+
+if(confirm("Delete supplier?")){
+window.location="/delete-supplier/"+id;
+}
+
+}
+
+function paySupplier(){
+
+let id=getSelectedSupplier();
+if(!id)return;
+
+window.location="/pay-supplier/"+id;
+
+}
+
+function viewLedger(){
+
+let id=getSelectedSupplier();
+if(!id)return;
+
+window.location="/supplier-ledger/"+id;
+
+}
+
+function filterTable(){
+
+let input=document.getElementById("search");
+let filter=input.value.toUpperCase();
+
+let table=document.getElementById("supplierTable");
+let tr=table.getElementsByTagName("tr");
+
+for(let i=1;i<tr.length;i++){
+
+let td=tr[i].getElementsByTagName("td")[1];
+
+if(td){
+
+let txt=td.textContent||td.innerText;
+
+tr[i].style.display=
+txt.toUpperCase().indexOf(filter)>-1?"":"none";
+
+}
+
+}
+
+}
+
+/* only one checkbox */
+
+document.querySelectorAll(".supplierCheck").forEach(cb=>{
+cb.addEventListener("change",function(){
+
+document.querySelectorAll(".supplierCheck").forEach(other=>{
+if(other!==this)other.checked=false;
+});
+
+});
+});
+
+</script>

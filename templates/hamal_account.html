@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hamal Accounts | SR Steel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --dark: #111827; --bg: #f3f4f6; }
+        body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; }
+        .main-content{
+        margin-left:280px;
+        padding:30px;
+        transition:.3s;
+        }
+
+        /* tablet */
+        @media(max-width:1024px){
+        .main-content{
+        margin-left:0;
+        padding:20px;
+        }
+        }
+
+        /* mobile */
+        @media(max-width:600px){
+        .main-content{
+        padding:15px;
+        }
+        }
+        @media(max-width:768px){
+
+        .hamal-card{
+        padding:20px;
+        }
+
+        .balance-tag{
+        padding:12px;
+        font-size:14px;
+        }
+
+        .balance-tag span{
+        font-size:22px;
+        }
+
+        }
+        .hamal-header {
+            background: var(--dark); color: white; border-radius: 15px; padding: 30px;
+            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .hamal-card {
+            background: white; border-radius: 15px; padding: 25px;
+            border-top: 5px solid var(--primary); box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            position: relative; transition: 0.3s;
+        }
+        .hamal-card:hover { transform: translateY(-5px); }
+
+        .balance-tag {
+            background: #eff6ff; color: var(--primary); padding: 15px;
+            border-radius: 12px; font-weight: 800; border: 1px solid #dbeafe;
+        }
+
+        /* Dropdown settings for Edit/Delete */
+        .card-options { position: absolute; top: 15px; right: 15px; }
+        .btn-option { background: none; border: none; color: #9ca3af; padding: 5px; cursor: pointer; }
+        .btn-option:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    {% include 'sidebar.html' %}
+
+    <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3 shadow-sm border-0">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="hamal-header">
+            <div>
+                <h2 class="fw-800 mb-1"><i class="fas fa-truck-moving me-2 text-primary"></i>Hamal / Transport</h2>
+                <p class="text-muted mb-0">Manage loading labor and outstanding dues</p>
+            </div>
+            <button class="btn btn-primary px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#addHamal">
+                <i class="fas fa-plus-circle me-2"></i>New Hamal
+            </button>
+        </div>
+
+        <div class="row g-4">
+            {% for h in hamals %}
+        <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                <div class="hamal-card">
+                    <div class="dropdown card-options">
+                        <button class="btn-option" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editHamal{{h.id}}"><i class="fas fa-edit me-2 text-warning"></i> Edit Details</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteHamal{{h.id}}"><i class="fas fa-trash me-2"></i> Delete Account</a></li>
+                        </ul>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-1">{{ h.name }}</h5>
+                    <p class="small text-muted mb-4"><i class="fas fa-phone me-2"></i>{{ h.mobile or 'N/A' }}</p>
+
+                    <div class="balance-tag text-center mb-4">
+                        <small class="d-block text-uppercase mb-1" style="font-size: 10px; letter-spacing: 1px;">Current Due Balance</small>
+                        <span class="fs-3">₹ {{ "{:,.2f}".format(h.total_due) }}</span>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="/hamal-ledger/{{ h.id }}" class="btn btn-sm btn-outline-primary w-100 py-2 fw-bold">View Ledger</a>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-sm btn-primary w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#payModal{{h.id}}">Pay Cash</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="payModal{{h.id}}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form action="/pay-hamal/{{h.id}}" method="POST" class="modal-content border-0">
+                        <div class="modal-header"><h5>Record Payment - {{ h.name }}</h5></div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Amount to Pay (₹)</label>
+                                <input type="number" step="0.01" name="amount" class="form-control form-control-lg" required>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-bold text-muted">Description</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="e.g. Weekly settlement"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Confirm Payment</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editHamal{{h.id}}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form action="/edit-hamal/{{h.id}}" method="POST" class="modal-content border-0">
+                        <div class="modal-header"><h5>Edit Worker Details</h5></div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" name="name" class="form-control" value="{{h.name}}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mobile Number</label>
+                                <input type="tel" name="mobile" class="form-control" value="{{h.mobile}}" pattern="[0-9]{10}" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary w-100">Update Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="deleteHamal{{h.id}}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content border-0">
+                        <div class="modal-body text-center p-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <h5 class="fw-bold">Delete {{ h.name }}?</h5>
+                            <p class="text-muted small">This action cannot be undone. All ledger records will be lost.</p>
+                            <div class="d-flex gap-2 justify-content-center mt-4">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <a href="/delete-hamal/{{h.id}}" class="btn btn-danger px-4">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="addHamal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/hamal-account" method="POST" class="modal-content border-0">
+                <div class="modal-header"><h5>Register New Hamal</h5></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="mb-0"><label class="form-label">Mobile</label><input type="tel" name="mobile" class="form-control" pattern="[0-9]{10}" maxlength="10" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Save Account</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

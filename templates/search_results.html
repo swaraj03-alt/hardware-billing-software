@@ -1,0 +1,38 @@
+{% include 'sidebar.html' %}
+
+<div class="main-container">
+
+<h2>Search Results for "{{ q }}"</h2>
+
+<div class="data-box">
+<h3>Bills</h3>
+<table>
+<tr><th>ID</th><th>Customer</th><th>Amount</th></tr>
+{% for b in results.bills %}
+<tr>
+<td>{{ b.id }}</td>
+<td>{{ b.customer_name }}</td>
+<td>₹{{ b.total_amount }}</td>
+</tr>
+{% else %}
+<tr><td colspan="3">No bills found</td></tr>
+{% endfor %}
+</table>
+</div>
+
+<div class="data-box">
+<h3>Products</h3>
+<table>
+<tr><th>Product</th><th>Price</th></tr>
+{% for p in results.products %}
+<tr>
+<td>{{ p.product_name }}</td>
+<td>₹{{ p.selling_price }}</td>
+</tr>
+{% else %}
+<tr><td colspan="2">No products found</td></tr>
+{% endfor %}
+</table>
+</div>
+
+</div>

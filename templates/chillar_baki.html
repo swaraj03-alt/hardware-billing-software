@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chillar Baki | SR Steel ERP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --primary:#2563eb;
+    --success:#10b981;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+    --text:#0f172a;
+    --muted:#64748b;
+}
+
+*{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#f5f7fb;
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+/* MAIN OFFSET FROM SIDEBAR */
+.main{
+    margin-left:260px;   /* match sidebar width */
+    padding:28px 32px;
+}
+
+/* CENTER CONTENT LIKE DASHBOARD */
+.content-wrap{
+    max-width:1100px;
+}
+
+/* HEADER */
+.title{
+    font-size:22px;
+    font-weight:600;
+    color:#0f172a;
+}
+
+.subtitle{
+    font-size:14px;
+    color:#64748b;
+    margin-top:4px;
+    margin-bottom:18px;
+}
+
+/* CARD (match ERP) */
+.card{
+    background:#fff;
+    border-radius:14px;
+    border:1px solid #e2e8f0;
+    padding:14px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.04);
+}
+
+/* TABLE */
+.baki-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.baki-table th{
+    text-align:left;
+    font-size:13px;
+    color:#64748b;
+    padding:12px 10px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+.baki-table td{
+    padding:12px 10px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:14px;
+    color:#0f172a;
+}
+
+.amt{
+    font-weight:600;
+}
+
+/* RECEIVE INPUT */
+.receive{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.receive input{
+    width:90px;
+    padding:6px 8px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+}
+
+.receive select{
+    padding:6px 8px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+}
+
+.btn{
+    background:#10b981;
+    border:none;
+    color:#fff;
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:13px;
+    cursor:pointer;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+
+    .main{
+        margin-left:0;
+        padding:20px 14px;
+    }
+
+    .content-wrap{
+        max-width:100%;
+    }
+
+    .receive{
+        flex-wrap:wrap;
+    }
+
+    .receive input,
+    .receive select,
+    .btn{
+        width:100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+    {% include "sidebar.html" %}
+
+    <div class="main">
+
+        <div class="content-wrap">
+
+            <div class="page-header">
+                <div class="title">Chillar Baki</div>
+                <div class="subtitle">Customer pending (udhar) management</div>
+            </div>
+
+            <div class="card">
+                <table class="baki-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Mobile</th>
+                            <th>Pending</th>
+                            <th>Receive</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for c in customers %}
+                        <tr>
+                            <td>{{ c.customer_name }}</td>
+                            <td>{{ c.customer_mobile }}</td>
+                            <td class="amt">₹ {{ "%.2f"|format(c.total_baki) }}</td>
+                            <td>
+                                <form method="POST" action="/receive-chillar" class="receive">
+                                    <input type="hidden" name="customer_name" value="{{ c.customer_name }}">
+                                    <input type="hidden" name="customer_mobile" value="{{ c.customer_mobile }}">
+
+                                    <input type="number" name="amount_paid" placeholder="Amount" required>
+
+                                    <select name="payment_mode" onchange="toggleUpi(this)">
+                                        <option>Cash</option>
+                                        <option>UPI</option>
+                                    </select>
+
+                                    <div class="upi-box" style="display:none">
+                                        <select name="upi_account">
+                                            <option value="Owner">Owner</option>
+                                            <option value="Staff">Staff</option>
+                                        </select>
+
+                                        <select name="staff_id" class="staff-select" style="display:none">
+                                            {% for s in staff %}
+                                            <option value="{{ s.id }}">{{ s.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button class="btn">Receive</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+<script>
+function toggleUpi(sel){
+    let box = sel.parentElement.querySelector(".upi-box");
+    if(sel.value === "UPI"){
+        box.style.display = "flex";
+    }else{
+        box.style.display = "none";
+    }
+}
+
+document.addEventListener("change",function(e){
+    if(e.target.name==="upi_account"){
+        let staffSel = e.target.parentElement.querySelector(".staff-select");
+        if(e.target.value==="Staff"){
+            staffSel.style.display="block";
+        }else{
+            staffSel.style.display="none";
+        }
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Daily Closing | SR Steel ERP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+body{
+background:
+radial-gradient(circle at 10% 10%, #f1f5ff 0%, transparent 40%),
+radial-gradient(circle at 90% 20%, #eef2ff 0%, transparent 40%),
+linear-gradient(180deg,#f8fafc 0%,#eef2f7 60%,#f8fafc 100%);
+}
+
+/* MAIN CONTAINER */
+
+.main-container{
+margin-left:270px;
+padding:40px 60px;
+}
+
+/* HEADER */
+
+.header{
+background:white;
+padding:25px;
+border-radius:16px;
+box-shadow:0 10px 30px rgba(0,0,0,.08);
+margin-bottom:30px;
+text-align:center;
+}
+
+.header h2{
+font-weight:800;
+font-size:28px;
+}
+
+.header span{
+color:#10b981;
+font-weight:700;
+}
+
+.meta{
+margin-top:8px;
+color:#64748b;
+font-size:14px;
+}
+
+/* GRID */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
+/* CARD */
+
+.card{
+background:white;
+padding:25px;
+border-radius:16px;
+box-shadow:0 12px 35px rgba(0,0,0,.08);
+text-align:center;
+transition:0.25s;
+cursor:pointer;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+.card h4{
+font-size:13px;
+color:#64748b;
+margin-bottom:10px;
+text-transform:uppercase;
+letter-spacing:.5px;
+}
+
+.value{
+font-size:28px;
+font-weight:800;
+color:#0f172a;
+}
+
+.success{color:#10b981;}
+.danger{color:#ef4444;}
+.primary{color:#2563eb;}
+
+.footer{
+margin-top:40px;
+text-align:center;
+}
+
+button{
+background:#2563eb;
+border:none;
+color:white;
+padding:12px 26px;
+border-radius:8px;
+font-weight:700;
+cursor:pointer;
+font-size:14px;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.btn-green{
+background:#10b981;
+}
+
+.btn-green:hover{
+background:#059669;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* TABLET */
+
+@media (max-width:1024px){
+
+.main-container{
+margin-left:0;
+padding:30px 20px;
+}
+
+.header h2{
+font-size:22px;
+}
+
+.value{
+font-size:24px;
+}
+
+}
+
+/* MOBILE */
+
+@media (max-width:768px){
+
+.main-container{
+margin-left:0;
+padding:20px 15px;
+}
+
+.header{
+padding:20px;
+}
+
+.header h2{
+font-size:20px;
+}
+
+.meta{
+font-size:12px;
+}
+
+.grid{
+grid-template-columns:1fr 1fr;
+gap:14px;
+}
+
+.card{
+padding:18px;
+}
+
+.value{
+font-size:20px;
+}
+
+.footer{
+margin-top:30px;
+}
+
+button{
+width:100%;
+margin-top:10px;
+}
+
+}
+
+/* SMALL MOBILE */
+
+@media (max-width:480px){
+
+.grid{
+grid-template-columns:1fr;
+}
+
+.value{
+font-size:18px;
+}
+
+}
+
+/* ================= PRINT ================= */
+
+@media print {
+
+body{
+background:white;
+}
+
+.sidebar{
+display:none;
+}
+
+button{
+display:none;
+}
+
+.main-container{
+margin-left:0;
+padding:10px;
+}
+
+.header{
+box-shadow:none;
+border:1px solid #ddd;
+}
+
+.card{
+box-shadow:none;
+border:1px solid #ddd;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="main-container">
+
+<div class="header">
+
+<h2>✔ Day Closed <span>Successfully</span></h2>
+
+<div class="meta">
+Date: {{ data.closing_date }}
+{% if data.closed_at %}
+• {{ data.closed_at }}
+{% endif %}
+</div>
+
+{% if data.closed_by_name %}
+<div class="meta">
+Closed by: <b>{{ data.closed_by_name }}</b>
+</div>
+{% endif %}
+
+</div>
+
+<div class="grid">
+
+<a href="/daily-report" style="text-decoration:none;color:inherit;">
+<div class="card">
+<h4>Total Sale</h4>
+<div class="value primary">
+₹{{ "{:,.0f}".format(data.total_sale or 0) }}
+</div>
+</div>
+</a>
+
+<a href="/cash-tally" style="text-decoration:none;color:inherit;">
+<div class="card">
+<h4>Cash Collection</h4>
+<div class="value">
+₹{{ "{:,.0f}".format(data.cash_collection or 0) }}
+</div>
+</div>
+</a>
+
+<a href="/upi-report" style="text-decoration:none;color:inherit;">
+<div class="card">
+<h4>UPI Collection</h4>
+<div class="value">
+₹{{ "{:,.0f}".format(data.upi_collection or 0) }}
+</div>
+</div>
+</a>
+
+<a href=" " style="text-decoration:none;color:inherit;">
+<div class="card">
+<h4>Total Collection</h4>
+<div class="value primary">
+₹{{ "{:,.0f}".format(data.total_collection or 0) }}
+</div>
+</div>
+</a>
+
+
+<a href="/profit-report" style="text-decoration:none;color:inherit;">
+<div class="card">
+<h4>Total Profit</h4>
+<div class="value success">
+₹{{ "{:,.0f}".format(data.total_profit or 0) }}
+</div>
+</div>
+</a>
+
+</div>
+
+<div class="footer">
+
+<button onclick="window.print()">🧾 Print Report</button>
+
+<a href="/dashboard">
+<button class="btn-green" style="margin-left:10px;">
+Back to Dashboard
+</button>
+</a>
+
+</div>
+
+</div>
+
+</body>
+</html>

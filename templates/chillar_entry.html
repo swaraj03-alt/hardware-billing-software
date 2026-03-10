@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chillar Bikri | SR Steel ERP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+    --primary:#2563eb;
+    --success:#10b981;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+}
+body{margin:0;font-family:'Plus Jakarta Sans';background:var(--bg);}
+.main{
+margin-left:230px;
+padding:24px;
+transition:.3s;
+}
+
+/* tablet */
+@media(max-width:1024px){
+.main{
+margin-left:0;
+padding:18px;
+}
+}
+
+/* mobile */
+@media(max-width:600px){
+.main{
+padding:14px;
+}
+}
+.card{
+background:#fff;
+border-radius:14px;
+padding:22px;
+border:1px solid var(--border);
+max-width:900px;
+width:100%;
+margin:auto;
+}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.input-group{display:flex;flex-direction:column;gap:4px}
+label{font-size:11px;font-weight:800;color:#64748b}
+input,select{
+    padding:9px;border:1.5px solid var(--border);
+    border-radius:8px;font-weight:600
+}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th{font-size:11px;color:#64748b;text-align:left;padding:6px}
+td{padding:6px}
+.amount{text-align:right;font-weight:800}
+.btn{
+    margin-top:14px;padding:10px;border:none;
+    border-radius:8px;font-weight:800;color:#fff;cursor:pointer
+}
+.btn-add{background:#e2e8f0;color:#0f172a;width:100%}
+.btn-save{background:var(--success);width:100%}
+.search-res{
+    position:absolute;background:#fff;border:1px solid var(--border);
+    border-radius:8px;width:100%;z-index:1000;display:none
+}
+.search-res div{padding:8px;cursor:pointer}
+.search-res div:hover{background:#f1f5f9}
+</style>
+</head>
+
+<body>
+{% include 'sidebar.html' %}
+
+<div class="main">
+<div class="card">
+
+<h2><i class="fas fa-coins"></i> Chillar Bikri</h2>
+
+<form id="chillarForm">
+
+<div class="grid">
+<div class="input-group">
+<label>Customer</label>
+<input name="customer_name" id="cust">
+</div>
+
+<div class="input-group">
+<label>Mobile</label>
+<input name="customer_mobile" id="mobile">
+</div>
+
+<div class="input-group">
+<label>Payment</label>
+<select name="payment_mode" id="mode">
+<option value="Cash">Cash</option>
+<option value="Owner">Owner UPI</option>
+<option value="Staff">Staff</option>
+<option value="Pending">PENDING (Baki)</option>
+</select>
+</div>
+</div>
+
+<table id="itemsTable">
+<thead>
+<tr>
+<th>Item</th>
+<th width="70">Qty</th>
+<th width="100">Rate</th>
+<th width="120">Amount</th>
+<th></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<button type="button" class="btn btn-add" onclick="addRow()">+ Add Item</button>
+
+<div style="text-align:right;font-size:18px;font-weight:800;margin-top:12px">
+Total ₹ <span id="gTotal">0.00</span>
+</div>
+
+<button type="button" class="btn btn-save" onclick="saveChillar()">SAVE CHILLAR SALE</button>
+
+</form>
+
+</div>
+</div>
+
+<script>
+function addRow(){
+    let tr=document.createElement("tr")
+
+    tr.innerHTML=`
+    <td style="position:relative">
+        <input class="pname" placeholder="Item">
+        <input type="hidden" class="pid">
+        <div class="search-res"></div>
+    </td>
+    <td><input type="number" class="qty" value="1" min="1"></td>
+    <td><input type="number" class="rate" step="0.01"></td>
+    <td class="amount">0.00</td>
+    <td><i class="fa fa-trash" style="cursor:pointer;color:#ef4444"></i></td>
+    `
+
+    document.querySelector("#itemsTable tbody").appendChild(tr)
+
+    let pname=tr.querySelector(".pname")
+    let res=tr.querySelector(".search-res")
+
+    pname.addEventListener("input",function(){
+        let q=this.value.trim()
+        if(q.length<1){res.style.display="none";return}
+
+        fetch("/api/search-product?q="+q)
+        .then(r=>r.json())
+        .then(data=>{
+            res.innerHTML=""
+            data.forEach(p=>{
+                let d=document.createElement("div")
+                d.innerText=p.product_name+" ₹"+p.selling_rate
+                d.onclick=()=>{
+                    pname.value=p.product_name
+                    tr.querySelector(".pid").value=p.id
+                    tr.querySelector(".rate").value=p.selling_rate
+                    res.style.display="none"
+                    calcTotal()
+                }
+                res.appendChild(d)
+            })
+            res.style.display="block"
+        })
+    })
+
+    tr.querySelector(".qty").oninput=calcTotal
+    tr.querySelector(".rate").oninput=calcTotal
+
+    tr.querySelector(".fa-trash").onclick=()=>{
+        tr.remove()
+        calcTotal()
+    }
+}
+
+function calcTotal(){
+    let total=0
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+        let q=parseFloat(r.querySelector(".qty").value)||0
+        let rate=parseFloat(r.querySelector(".rate").value)||0
+        let amt=q*rate
+        r.querySelector(".amount").innerText=amt.toFixed(2)
+        total+=amt
+    })
+    gTotal.innerText=total.toFixed(2)
+}
+
+function saveChillar(){
+
+    let payment = mode.value
+
+    let fd=new FormData()
+    fd.append("customer_name",cust.value)
+    fd.append("customer_mobile",mobile.value)
+    fd.append("payment_mode",payment)
+    fd.append("total",gTotal.innerText)
+
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+        fd.append("pid[]",r.querySelector(".pid").value)
+        fd.append("qty[]",r.querySelector(".qty").value)
+        fd.append("rate[]",r.querySelector(".rate").value)
+    })
+
+    fetch("/save-chillar-multi",{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(d=>{
+        if(d.success){
+            if(payment==="Pending"){
+                alert("Saved as BAKI")
+                window.location="/chillar-baki"
+            }else{
+                alert("Cash Sale Saved")
+                location.reload()
+            }
+        }
+    })
+}
+addRow()
+</script>
+
+</body>
+</html>

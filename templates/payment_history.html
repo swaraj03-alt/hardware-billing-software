@@ -1,0 +1,400 @@
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="main-wrapper">
+{% include 'sidebar.html' %}
+
+<main class="content-area">
+<div class="container-fluid">
+
+<header class="page-header">
+
+<div class="title-block">
+<div class="icon-box">
+<i class="fas fa-wallet"></i>
+</div>
+<div>
+<h1>{{ payment_mode }} Payment History</h1>
+<p><span class="badge-date">{{ period_label }}</span></p>
+</div>
+</div>
+
+<div class="header-actions">
+
+<form method="get" class="filter-bar">
+<input type="hidden" name="mode" value="{{ payment_mode }}">
+
+<input type="text" name="customer" placeholder="Customer"
+value="{{ request.args.get('customer','') }}">
+
+<input type="date" name="from" value="{{ request.args.get('from','') }}">
+<input type="date" name="to" value="{{ request.args.get('to','') }}">
+
+<button class="btn btn-primary">
+<i class="fas fa-filter"></i>
+<span>Apply</span>
+</button>
+</form>
+
+<div class="action-buttons">
+<a href="{{ export_url }}" class="btn btn-success">
+<i class="fas fa-file-excel"></i>
+<span>Excel</span>
+</a>
+
+<button onclick="window.print()" class="btn btn-dark">
+<i class="fas fa-print"></i>
+<span>Print</span>
+</button>
+</div>
+
+</div>
+</header>
+
+<!-- SUMMARY -->
+<div class="summary-grid">
+<div class="sum-card">
+<span>Total Transactions</span>
+<b>{{ total_rows }}</b>
+</div>
+
+<div class="sum-card">
+<span>Total Amount</span>
+<b>₹{{ total_amount }}</b>
+</div>
+</div>
+
+<!-- TABLE -->
+<div class="table-card">
+
+<div class="table-wrap">
+<table class="payment-table">
+
+<thead>
+<tr>
+<th>Date</th>
+<th>Customer</th>
+<th>Reference</th>
+<th class="right">Amount</th>
+</tr>
+</thead>
+
+<tbody>
+{% for p in payments %}
+<tr class="{% if p.bill_id %}row-click{% endif %}"
+    {% if p.bill_id %}
+    onclick="openBill('{{ p.bill_id }}')"
+    {% endif %}>
+<td>
+<div class="date-main">{{ p.created_at.strftime('%d %b %Y') }}</div>
+<div class="time">{{ p.created_at.strftime('%I:%M %p') }}</div>
+</td>
+
+<td>{{ p.customer_name }}</td>
+
+<td>
+{% if p.bill_id %}
+<span class="ref-badge">Bill #{{ p.bill_id }}</span>
+{% else %}
+<span class="ref-badge alt">Chillar</span>
+{% endif %}
+</td>
+
+<td class="amt">₹{{ "%.2f"|format(p.amount) }}</td>
+
+</tr>
+{% else %}
+<tr>
+<td colspan="4" class="no-data">No transactions</td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+<!-- PAGINATION -->
+{% if total_pages > 1 %}
+<div class="pagination">
+
+{% if page > 1 %}
+<a href="?mode={{payment_mode}}&page={{page-1}}&from={{request.args.get('from','')}}&to={{request.args.get('to','')}}&customer={{request.args.get('customer','')}}">
+Prev
+</a>
+{% endif %}
+
+<span>Page {{page}} / {{total_pages}}</span>
+
+{% if page < total_pages %}
+<a href="?mode={{payment_mode}}&page={{page+1}}&from={{request.args.get('from','')}}&to={{request.args.get('to','')}}&customer={{request.args.get('customer','')}}">
+Next
+</a>
+{% endif %}
+
+</div>
+{% endif %}
+
+</div>
+</div>
+</main>
+</div>
+
+<script>
+function openBill(id){
+    if(!id) return;
+    window.open("/bill-preview/"+id, "_blank");
+}
+</script>
+
+<style>
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background:#f8fafc;
+margin:0
+}
+
+/* LAYOUT */
+.content-area{
+margin-left:280px;
+padding:28px;
+min-height:100vh
+}
+
+@media(max-width:1024px){
+.content-area{
+margin-left:0;
+padding:18px
+}
+}
+
+/* HEADER */
+.page-header{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+flex-wrap:wrap;
+gap:14px;
+margin-bottom:20px
+}
+
+.title-block{
+display:flex;
+gap:12px;
+align-items:center
+}
+
+.icon-box{
+width:46px;
+height:46px;
+background:#3b82f6;
+color:#fff;
+border-radius:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px
+}
+
+.badge-date{
+background:#e2e8f0;
+padding:3px 10px;
+border-radius:6px;
+font-weight:700;
+font-size:12px
+}
+
+/* FILTER */
+.header-actions{
+display:flex;
+flex-direction:column;
+gap:8px;
+align-items:flex-end
+}
+
+.filter-bar{
+display:flex;
+gap:6px;
+background:#fff;
+border:1px solid #e2e8f0;
+padding:6px;
+border-radius:10px;
+flex-wrap:wrap
+}
+
+.filter-bar input{
+border:none;
+outline:none;
+font-weight:600;
+padding:6px 8px;
+min-width:120px
+}
+
+.action-buttons{
+display:flex;
+gap:8px
+}
+
+/* BUTTONS */
+.btn{
+display:flex;
+align-items:center;
+gap:6px;
+padding:8px 14px;
+border-radius:10px;
+border:none;
+font-weight:700;
+cursor:pointer;
+font-size:13px
+}
+
+.btn-primary{background:#3b82f6;color:#fff}
+.btn-success{background:#16a34a;color:#fff;text-decoration:none}
+.btn-dark{background:#0f172a;color:#fff}
+
+/* SUMMARY */
+.summary-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:12px;
+margin-bottom:16px
+}
+
+.sum-card{
+background:#fff;
+padding:14px;
+border-radius:12px;
+box-shadow:0 6px 14px rgba(0,0,0,.05)
+}
+
+.sum-card span{
+font-size:12px;
+color:#64748b;
+font-weight:600
+}
+
+.sum-card b{
+font-size:20px;
+display:block;
+margin-top:4px
+}
+
+/* TABLE */
+.table-card{
+background:#fff;
+border-radius:16px;
+box-shadow:0 10px 24px rgba(0,0,0,.06);
+overflow:hidden
+}
+
+.table-wrap{
+overflow:auto
+}
+
+.payment-table{
+width:100%;
+border-collapse:collapse;
+min-width:600px
+}
+
+.payment-table th{
+background:#f8fafc;
+padding:14px;
+font-size:11px;
+text-transform:uppercase;
+color:#64748b;
+text-align:left
+}
+
+.payment-table td{
+padding:16px 14px;
+border-bottom:1px solid #f1f5f9;
+vertical-align:middle
+}
+
+.date-main{
+font-weight:700
+}
+
+.time{
+font-size:11px;
+color:#64748b
+}
+
+.amt{
+text-align:right;
+font-weight:800
+}
+
+.right{text-align:right}
+
+.row-click{cursor:pointer}
+.row-click:hover{background:#f1f5f9}
+
+/* BADGE */
+.ref-badge{
+background:#dbeafe;
+color:#1d4ed8;
+padding:4px 8px;
+border-radius:6px;
+font-size:12px;
+font-weight:700
+}
+
+.ref-badge.alt{
+background:#fef3c7;
+color:#92400e
+}
+
+/* PAGINATION */
+.pagination{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:14px;
+padding:14px
+}
+
+.pagination a{
+background:#e2e8f0;
+padding:6px 12px;
+border-radius:8px;
+text-decoration:none;
+color:#0f172a;
+font-weight:700
+}
+
+/* MOBILE TABLE STACK */
+@media(max-width:640px){
+
+.payment-table{
+min-width:0
+}
+
+.payment-table thead{
+display:none
+}
+
+.payment-table tr{
+display:block;
+padding:10px;
+border-bottom:1px solid #e2e8f0
+}
+
+.payment-table td{
+display:flex;
+justify-content:space-between;
+padding:6px 0;
+border:none
+}
+
+.payment-table td::before{
+content:attr(data-label);
+font-weight:700;
+color:#64748b
+}
+
+.amt{
+text-align:left
+}
+}
+</style>

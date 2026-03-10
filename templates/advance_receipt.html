@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SR Steel Advance Receipt</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:white;
+margin:0;
+padding:0;
+}
+
+.receipt{
+width:760px;
+margin:auto;
+padding:15px;
+color:#b4363c;
+}
+
+.header{
+text-align:center;
+position:relative;
+}
+
+.shop{
+font-size:46px;
+font-weight:bold;
+letter-spacing:3px;
+}
+
+.mob{
+position:absolute;
+right:0;
+top:5px;
+text-align:right;
+font-size:16px;
+}
+
+.address{
+margin-top:5px;
+font-size:15px;
+}
+
+.topinfo{
+display:flex;
+justify-content:space-between;
+margin-top:15px;
+font-size:16px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #b4363c;
+padding:6px;
+font-size:15px;
+}
+
+th{
+text-align:center;
+}
+
+.right{
+text-align:right;
+}
+
+.summary{
+width:260px;
+margin-left:auto;
+margin-top:15px;
+}
+
+.summary td{
+border:1px solid #b4363c;
+padding:8px;
+}
+
+.advance{
+font-weight:bold;
+color:#2e7d32;
+font-size:18px;
+}
+
+.footer{
+margin-top:25px;
+font-size:14px;
+}
+
+.sign{
+text-align:right;
+margin-top:30px;
+}
+
+button{
+padding:6px 12px;
+margin:5px;
+}
+
+@media print{
+button{display:none}
+}
+
+</style>
+
+<script>
+
+function downloadPDF(){
+
+let element=document.querySelector(".receipt");
+
+let opt={
+margin:5,
+filename:'Advance_Receipt_{{booking.id}}.pdf',
+image:{type:'jpeg',quality:0.98},
+html2canvas:{scale:2},
+jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+};
+
+html2pdf().set(opt).from(element).save();
+
+}
+
+function sendWhatsApp(){
+
+downloadPDF();
+
+setTimeout(function(){
+
+let phone="{{booking.phone}}";
+
+let msg="SR Steel Advance Receipt #{{booking.id}} generated.";
+
+window.open("https://wa.me/91"+phone+"?text="+encodeURIComponent(msg));
+
+},2000);
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div style="text-align:right">
+<button onclick="window.print()">Print</button>
+<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="sendWhatsApp()">Download + WhatsApp</button>
+</div>
+
+<div class="receipt">
+
+<div class="header">
+
+<div class="shop">SR Steel</div>
+
+<div class="mob">
+Mo. 9822714827<br>
+7020005481
+</div>
+
+<div class="address">
+कवितकर मंगल कार्यालय के बाजू, अकोट रोड, सूर्जी अंजनगांव<br>
+टिन पत्रे, अँगल, सलाख, पाइप के चिल्लर और ठोक विक्रेता
+</div>
+
+</div>
+
+<div class="topinfo">
+
+<div>
+<b>Receipt No:</b> {{booking.id}}
+</div>
+
+<div>
+<b>Date:</b> {{booking.created_at.strftime("%d-%m-%Y") if booking.created_at else ""}}
+</div>
+
+</div>
+
+<div style="margin-top:6px;font-size:16px">
+<b>Customer:</b> {{booking.customer_name}} <br>
+<b>Mobile:</b> {{booking.phone}} <br>
+<b>Delivery Date:</b> {{booking.delivery_date}}
+</div>
+
+<table>
+
+<tr>
+<th width="45%">Product</th>
+<th width="20%">Qty</th>
+<th width="15%">Rate</th>
+<th width="20%">Total</th>
+</tr>
+
+{% for item in items %}
+
+<tr>
+<td>{{item.product_name}}</td>
+<td>{{item.qty}}</td>
+<td class="right">{{item.rate}}</td>
+<td class="right">{{item.total}}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<table class="summary">
+
+<tr>
+<td>Advance Paid</td>
+<td class="right advance">₹{{booking.advance_amount}}</td>
+</tr>
+
+</table>
+
+<div class="footer">
+
+<b>Note:</b><br>
+Advance amount will be adjusted in final bill.<br>
+Please keep this receipt for reference.
+
+</div>
+
+<div class="sign">
+Customer Signature
+</div>
+
+</div>
+
+</body>
+</html>

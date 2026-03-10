@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pending Bills | SR Steel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+:root{
+    --danger:#dc2626;
+    --danger-soft:#fef2f2;
+    --danger-bg:#fdf2f2;
+    --sidebar-w:230px;
+}
+
+/* BASE */
+body{
+    margin:0;
+    background:var(--danger-bg);
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+/* =========================
+   MAIN LAYOUT (ERP SYNC)
+========================= */
+.main-content{
+    margin-left:230px;
+    padding:28px;
+    min-height:100vh;
+    transition:.3s;
+}
+
+/* sidebar collapsed */
+.sidebar.collapsed ~ .main-content{
+    margin-left:68px;
+}
+
+/* tablet */
+@media(max-width:1024px){
+    .main-content{
+        margin-left:0;
+        margin-top:70px;
+        padding:20px;
+    }
+}
+
+/* mobile */
+@media(max-width:600px){
+    .main-content{
+        padding:14px;
+    }
+}
+
+/* =========================
+   ALERT BANNER
+========================= */
+.alert-banner{
+    background:#991b1b;
+    color:white;
+    border-radius:16px;
+    padding:22px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    gap:16px;
+}
+
+.alert-banner h1{
+    margin:0;
+    font-size:28px;
+    font-weight:800;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .alert-banner{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .alert-banner i{
+        align-self:flex-end;
+        font-size:28px !important;
+    }
+}
+
+/* =========================
+   CARD
+========================= */
+.pending-card{
+    background:white;
+    border-radius:18px;
+    border:1px solid #fecaca;
+    box-shadow:0 6px 20px rgba(220,38,38,.06);
+    padding:22px;
+}
+
+/* =========================
+   HEADER ROW
+========================= */
+.card-header-flex{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .card-header-flex{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+
+/* =========================
+   SEARCH
+========================= */
+.search-box{
+    width:260px;
+}
+
+.search-box input{
+    border-radius:10px;
+    font-size:13px;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .search-box{
+        width:100%;
+    }
+}
+
+/* =========================
+   TABLE
+========================= */
+.table-responsive{
+    overflow-x:auto;
+}
+
+#pendingTable{
+    min-width:700px;
+}
+
+.table thead th{
+    background:var(--danger-soft);
+    color:#991b1b;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    padding:14px;
+}
+
+.table td{
+    padding:14px;
+    vertical-align:middle;
+}
+
+.urgent{
+    border-left:5px solid var(--danger) !important;
+    background:#fff5f5;
+}
+
+/* =========================
+   BADGES
+========================= */
+.days-badge{
+    background:#fee2e2;
+    color:#dc2626;
+    padding:4px 10px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:12px;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+.btn-danger{
+    border-radius:8px;
+    font-weight:700;
+}
+
+.btn-outline-success{
+    border-radius:8px;
+}
+
+/* mobile icon only */
+@media(max-width:600px){
+    .btn span{
+        display:none;
+    }
+}
+
+/* =========================
+   MOBILE TABLE CARDS
+========================= */
+@media(max-width:600px){
+
+    #pendingTable thead{
+        display:none;
+    }
+
+    #pendingTable tr{
+        display:block;
+        border:1px solid #fecaca;
+        border-radius:14px;
+        margin-bottom:12px;
+        padding:12px;
+        background:white;
+    }
+
+    #pendingTable td{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:6px 0;
+        border:none;
+        font-size:13px;
+    }
+
+    #pendingTable td::before{
+        content:attr(data-label);
+        font-weight:700;
+        color:#64748b;
+        font-size:10px;
+        text-transform:uppercase;
+    }
+}
+</style>
+</head>
+<body>
+
+    {% include 'sidebar.html' %}
+
+    <div class="main-content">
+        <div class="alert-banner">
+            <div>
+                <h6 class="text-uppercase small fw-bold opacity-75">Total Pending Recovery</h6>
+                <h1 class="fw-bold mb-0">₹ {{ "{:,.2f}".format(grand_total) }}</h1>
+            </div>
+            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+        </div>
+
+        <div class="pending-card">
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h4 class="fw-bold text-dark mb-0">Pending / Red Bills List</h4>
+
+    <div style="display:flex;gap:8px;align-items:center;">
+
+        <div class="input-group" style="width:220px;">
+            <input type="text" id="search" class="form-control" placeholder="Search customer..." onkeyup="filterTable()">
+        </div>
+
+        <!-- DELETE ALL -->
+        <button class="btn btn-outline-danger"
+                onclick="deleteAllDrafts()">
+            <i class="fa fa-trash"></i> Delete All
+        </button>
+
+    </div>
+
+</div>
+            <div class="table-responsive">
+                <table class="table table-hover" id="pendingTable">
+                    <thead>
+                        <tr>
+                            <th>Bill Info</th>
+                            <th>Customer Details</th>
+                            <th>Bill Amount</th>
+                            <th>Remaining</th>
+                            <th>Age</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bills %}
+                        <tr class="{{ 'urgent' if b.days_pending > 15 }}">
+                               <td data-label="Bill"><span class="fw-bold">#{{ b.id }}</span><br>
+                                <small class="text-muted">{{ b.bill_date }}</small>
+
+                                {% if b.status == 'PENDING' %}
+                                <div style="color:#dc2626;font-weight:800;font-size:12px">
+                                <div style="color:#dc2626;font-weight:800;font-size:12px">
+                                    <i class="fa fa-clock"></i> PENDING
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ b.customer_name }}</div>
+                                <small class="text-muted">{{ b.customer_mobile }}</small>
+                            </td>
+                            <td class="text-muted">₹ {{ b.total_amount }}</td>
+                            <td>
+                                <span class="text-danger fw-bold" style="font-size: 16px;">₹ {{ b.balance_amount }}</span>
+                            </td>
+                            <td>
+                                <span class="days-badge">{{ b.days_pending }} Days Old</span>
+                            </td>
+                           <td class="text-end">
+
+    <!-- EDIT -->
+<a href="/billing?edit={{ b.id }}" class="btn btn-sm btn-primary me-1">
+    <i class="fa fa-pen"></i>
+    </a>
+
+    <!-- DELETE -->
+    <button class="btn btn-sm btn-outline-danger me-1"
+            onclick="deleteBill({{ b.id }})">
+        <i class="fa fa-trash"></i>
+    </button>
+
+    <!-- WhatsApp -->
+    <a href="https://wa.me/91{{ b.customer_mobile }}?text=Hello {{ b.customer_name }}, your payment of Rs.{{ b.balance_amount }} is pending for Bill No. {{ b.id }}. Please clear it soon."
+       target="_blank" class="btn btn-sm btn-outline-success me-1">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Pay -->
+    <button class="btn btn-sm btn-danger"
+            onclick="window.location.href='/receive-payment/{{ b.id }}'">
+        Pay
+    </button>
+
+</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterTable() {
+            let input = document.getElementById("search");
+            let filter = input.value.toUpperCase();
+            let tr = document.getElementById("pendingTable").getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                let td = tr[i].getElementsByTagName("td")[1];
+                if (td) {
+                    let text = td.textContent || td.innerText;
+                    tr[i].style.display = text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+
+        function deleteBill(id){
+
+    if(!confirm("Delete this draft bill?")) return;
+
+    fetch("/delete-bill/" + id, {
+        method: "POST"
+    })
+    .then(r => r.json())
+    .then(res => {
+        if(res.success){
+            alert("Draft deleted");
+            location.reload();
+        }else{
+            alert(res.msg || "Delete failed");
+        }
+    });
+}
+        function deleteAllDrafts(){
+
+    if(!confirm("Delete ALL pending drafts?")) return;
+
+    fetch("/delete-all-drafts", {
+        method: "POST"
+    })
+    .then(r => r.json())
+    .then(res => {
+        if(res.success){
+            alert("All drafts deleted");
+            location.reload();
+        }else{
+            alert(res.msg || "Delete failed");
+        }
+    });
+}
+
+    </script>
+</body>
+</html>

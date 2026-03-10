@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SR Steel ERP | Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+
+:root{
+    --primary:#2563eb;
+    --primary-soft:#e8f0ff;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --dark:#0f172a;
+    --sidebar-width:270px;
+}
+
+/* BASE */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+body{
+    background:
+        radial-gradient(circle at 10% 10%, #f1f5ff 0%, transparent 40%),
+        radial-gradient(circle at 90% 20%, #eef2ff 0%, transparent 40%),
+        linear-gradient(180deg,#f8fafc 0%,#eef2f7 60%,#f8fafc 100%);
+    color:var(--dark);
+    overflow-x:hidden;
+}
+
+/* ===== MAIN DASHBOARD LAYOUT ===== */
+.main-container{
+    margin-left:var(--sidebar-width);
+    padding:28px 64px 40px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+}
+/* SEARCH RESULTS */
+.search-results{
+    width:340px;
+    max-height:320px;
+    overflow-y:auto;
+    border-radius:14px;
+    box-shadow:0 18px 40px rgba(0,0,0,.15);
+    border:1px solid #e5e7eb;
+}
+
+/* SEARCH ITEM */
+.search-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    font-size:13px;
+    transition:all .18s;
+}
+
+/* ICON */
+.search-item .icon{
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f1f5f9;
+    font-size:13px;
+}
+
+/* TYPE TAG */
+.search-item .tag{
+    font-size:10px;
+    background:#eef2ff;
+    color:#2563eb;
+    padding:3px 6px;
+    border-radius:6px;
+    text-transform:uppercase;
+    font-weight:700;
+}
+
+/* HOVER */
+.search-item:hover{
+    background:#f1f5ff;
+}
+
+/* HEADER */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(255,255,255,.7);
+    backdrop-filter:blur(16px);
+    padding:20px 28px;
+    border-radius:20px;
+    box-shadow:
+        0 14px 32px rgba(0,0,0,.08),
+        inset 0 1px rgba(255,255,255,.7);
+    border:1px solid rgba(255,255,255,.7);
+}
+
+.header h2{
+    font-size:1.45rem;
+    letter-spacing:-.4px;
+}
+
+.header small{
+    font-size:12px;
+    color:#64748b;
+    font-weight:600;
+}
+
+/* ===== KPI GRID ===== */
+.kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:22px;
+}
+
+/* KPI CARD */
+.kpi-card{
+    background:linear-gradient(180deg,#ffffff,#f7faff);
+    padding:26px;
+    border-radius:20px;
+    position:relative;
+    overflow:hidden;
+    transition:.28s;
+    box-shadow:
+        0 16px 40px rgba(0,0,0,.07),
+        inset 0 1px rgba(255,255,255,.8);
+}
+
+.kpi-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at 85% 10%, rgba(37,99,235,.15), transparent 60%);
+}
+
+.kpi-card::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:4px;
+    background:var(--primary);
+    border-radius:0 0 20px 20px;
+}
+
+.kpi-card:hover{
+    transform:translateY(-6px);
+    box-shadow:
+        0 24px 60px rgba(0,0,0,.12),
+        inset 0 1px rgba(255,255,255,.8);
+}
+
+/* GALLA */
+.kpi-card.galla{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+}
+
+.kpi-card.galla::before{
+    background:radial-gradient(circle at 85% 10%, rgba(255,255,255,.12), transparent 60%);
+}
+
+.kpi-card.galla::after{
+    background:var(--success);
+}
+
+.kpi-card h4{
+    font-size:11px;
+    text-transform:uppercase;
+    color:#64748b;
+    margin-bottom:8px;
+    letter-spacing:.7px;
+}
+
+.kpi-card.galla h4{
+    color:#94a3b8;
+}
+
+.value{
+    font-size:30px;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+/* SECONDARY KPI */
+.kpi-grid[style] .kpi-card{
+    padding:20px;
+    border-radius:16px;
+}
+
+/* ===== QUICK ACTIONS ===== */
+.quick-actions{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+    gap:16px;
+}
+
+.action-item{
+    background:linear-gradient(180deg,#ffffff,#f8fafc);
+    padding:18px 10px;
+    border-radius:16px;
+    text-align:center;
+    text-decoration:none;
+    color:var(--dark);
+    font-weight:700;
+    font-size:11px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    transition:.25s;
+    box-shadow:
+        0 10px 24px rgba(0,0,0,.06),
+        inset 0 1px rgba(255,255,255,.8);
+}
+
+.action-item:hover{
+    transform:translateY(-6px);
+    box-shadow:
+        0 18px 40px rgba(37,99,235,.2),
+        inset 0 1px rgba(255,255,255,.8);
+}
+
+.action-item i{
+    font-size:20px;
+    margin-bottom:6px;
+    color:var(--primary);
+}
+
+/* ===== PUSH STAFF BELOW SCREEN ===== */
+.header,
+.kpi-grid,
+.quick-actions{
+    flex-shrink:0;
+}
+
+.data-box{
+    margin-top:auto;
+    background:linear-gradient(180deg,#ffffff,#f8fafc);
+    padding:26px;
+    border-radius:20px;
+    box-shadow:
+        0 18px 50px rgba(0,0,0,.08),
+        inset 0 1px rgba(255,255,255,.8);
+}
+
+/* ===== TABLE ===== */
+.staff-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 12px;
+}
+
+.staff-table th{
+    padding:10px 16px;
+    font-size:11px;
+    color:#94a3b8;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    text-align:left;
+}
+
+.staff-table td{
+    padding:16px;
+    background:linear-gradient(180deg,#ffffff,#f8fafc);
+    font-weight:600;
+    transition:.2s;
+}
+
+.staff-table tr:hover td{
+    background:linear-gradient(180deg,#ffffff,#f1f5ff);
+    transform:scale(1.01);
+}
+
+.staff-table td:first-child{
+    border-radius:14px 0 0 14px;
+}
+
+.staff-table td:last-child{
+    border-radius:0 14px 14px 0;
+}
+
+/* AVATAR */
+.avatar{
+    width:44px;
+    height:44px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    color:white;
+    box-shadow:0 8px 18px rgba(37,99,235,.35);
+}
+
+.staff-cell{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+/* BADGES */
+.edit-badge{
+    padding:5px 10px;
+    border-radius:8px;
+    font-size:10px;
+    font-weight:800;
+}
+
+.edit-low{
+    background:#ecfdf5;
+    color:#059669;
+}
+
+.edit-high{
+    background:#fef2f2;
+    color:#dc2626;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:1024px){
+    .main-container{
+        margin-left:0;
+        padding:18px;
+    }
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+    }
+}
+
+@media (max-width:768px){
+    .quick-actions{
+        grid-template-columns:repeat(3,1fr);
+    }
+    .staff-table thead{
+        display:none;
+    }
+    .staff-table tr{
+        display:block;
+        margin-bottom:10px;
+    }
+    .staff-table td{
+        display:flex;
+        justify-content:space-between;
+    }
+    .staff-table td::before{
+        content:attr(data-label);
+        font-weight:800;
+        color:#94a3b8;
+        font-size:10px;
+    }
+}
+/* ===== ERP DENSITY SCALE (75% LOOK @100%) ===== */
+
+.app-layout{
+    zoom:0.85;
+}
+
+/* Firefox fallback */
+@-moz-document url-prefix() {
+    .app-layout{
+        transform:scale(0.85);
+        transform-origin:top left;
+        width:117%;
+    }
+}
+</style>
+</head>
+
+<body>
+ {% include 'sidebar.html' %}
+<div class="app-layout">
+
+    <div class="main-container">
+
+   <header class="header">
+    <div style="display:flex;align-items:center;gap:12px;">
+
+        <img src="/static/images/Logo.jpeg" alt="SR Steel"
+             style="height:72px;width:auto;border-radius:6px;object-fit:contain;">
+
+        <div>
+            <h2 style="font-weight:800;">SR STEEL <span style="color:var(--primary)">ERP</span></h2>
+            <small><i class="far fa-calendar-alt"></i> {{ current_date }}</small>
+        </div>
+
+    </div>
+        <div style="text-align:right">
+
+<form method="POST" action="/close-day" target="_blank"
+onsubmit="return confirmCloseDay()" style="margin-bottom:8px;">
+
+{% if role == "owner" %}
+<button type="submit"
+        style="
+        background:#ef4444;
+        border:none;
+        color:white;
+        padding:6px 14px;
+        border-radius:8px;
+        font-size:11px;
+        font-weight:700;
+        cursor:pointer;">
+    <i class="fas fa-lock"></i> Close Day
+</button>
+{% endif %}
+
+</form>
+
+
+    <span style="background:var(--primary-light);
+    color:var(--primary);
+    padding:2px 8px;
+    border-radius:6px;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;">
+        {{ role }}
+    </span>
+            <div class="search-box" style="margin-top: 10px; position: relative;">
+                <input type="text" id="globalSearch"
+placeholder="🔍 Search bills, customers, products..."
+autocomplete="off"
+style="
+width:320px;
+padding:10px 14px;
+border-radius:10px;
+border:1px solid #e2e8f0;
+outline:none;
+font-size:13px;
+background:#f8fafc;
+">
+                <div id="searchResults" class="search-results" style="position: absolute; top: 100%; right: 0; background: white; z-index: 1000; display: none; width: 300px; box-shadow: var(--card-shadow); border-radius: 12px;"></div>
+            </div>
+        </div>
+    </header>
+
+<div class="quick-actions">
+
+    <a href="/billing" class="action-item">
+        <i class="fas fa-file-invoice"></i>BILLING
+    </a>
+
+    <a href="/estimate" class="action-item">
+        <i class="fas fa-file"></i>ESTIMATE
+    </a>
+
+    <a href="/credit-ledger" class="action-item">
+        <i class="fas fa-book"></i>BAKI
+    </a>
+
+    <a href="/pending-bills" class="action-item">
+        <i class="fas fa-clock"></i>PENDING
+    </a>
+
+    <a href="/inventory" class="action-item">
+        <i class="fas fa-truck-loading"></i>PURCHASE
+    </a>
+
+    <a href="/gst-report" class="action-item">
+        <i class="fas fa-file-contract"></i>GST
+    </a>
+
+    <a href="/inventory" class="action-item">
+        <i class="fas fa-boxes"></i>STOCK
+    </a>
+
+    <a href="/suppliers" class="action-item">
+        <i class="fas fa-industry"></i>SUPPLIER
+    </a>
+
+    <a href="/users" class="action-item">
+        <i class="fas fa-users"></i>STAFF
+    </a>
+
+    <a href="/hamal-account" class="action-item">
+        <i class="fas fa-shuttle-van"></i>HAMALI
+    </a>
+
+    <a href="/advance-booking" class="action-item">
+        <i class="fas fa-hand-holding-usd"></i>ADVANCE
+    </a>
+
+    <!-- NEW CHILLAR MODULE -->
+    <a href="/chillar-bikri" class="action-item">
+        <i class="fas fa-coins"></i>CHILLAR BIKRI
+    </a>
+
+    <a href="/chillar-baki" class="action-item">
+        <i class="fas fa-receipt"></i>CHILLAR BAKI
+    </a>
+
+</div>
+
+    <div class="kpi-grid">
+        <a href="/daily-report" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <h4>Total Sale</h4>
+                <span class="value">₹{{ "{:,.0f}".format(total_sale|default(0)) }}</span>
+                <small style="display:block; font-size:10px;color:#64748b;font-weight: 600;">Today Sale</small>
+            </div>
+        </a>
+
+        <a href="/cash-tally" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card galla">
+                <h4>Cash in Galla</h4>
+                <span class="value">₹{{ "{:,.0f}".format(cash_collection|default(0)) }}</span>
+                <small style="display:block; font-size:10px;opacity:.7;font-weight: 600;">Nagdi Balance</small>
+            </div>
+        </a>
+
+        <a href="/upi-report" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <h4>UPI Received</h4>
+                <span class="value">₹{{ "{:,.2f}".format(upi_collection|default(0)) }}</span>
+                <small style="display:block; font-size:10px;color:#64748b;font-weight: 600;">Digital Today</small>
+            </div>
+        </a>
+        <a href="/upi-balance" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+            <h4>UPI Balance</h4>
+            <span class="value">₹{{ "{:,.2f}".format(upi_balance|default(0)) }}</span>
+            <small style="display:block;font-size:10px;color:#64748b;font-weight:600;">
+            Digital Balance
+            </small>
+            </div>
+            </a>
+        <a href="/credit-ledger" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card" style="border-bottom-color:var(--danger);">
+                <h4>Market Baki</h4>
+                <span class="value" style="color:var(--danger)">₹{{ "{:,.0f}".format(total_pending|default(0)) }}</span>
+                <small style="display:block; font-size:10px;color:#64748b;font-weight: 600;">Pending Collection</small>
+            </div>
+        </a>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <a href="/low-stock" style="text-decoration:none;">
+            <div class="kpi-card" style="border-color:var(--danger);padding:20px;">
+                <h4 style="color:var(--danger)">Low Stock</h4>
+                <span class="value" style="font-size:20px;">{{ low_stock_count|default(0) }} Items</span>
+            </div>
+        </a>
+        <a href="/pending-bills" style="text-decoration:none;">
+            <div class="kpi-card" style="border-color:var(--warning);padding:20px;">
+                <h4 style="color:var(--warning)">Unpaid Bills</h4>
+                <span class="value" style="font-size:20px;">{{ pending_bills|default(0) }} Bills</span>
+            </div>
+        </a>
+        <a href="/daily-report" style="text-decoration:none;">
+            <div class="kpi-card" style="border-color:var(--primary);padding:20px;">
+                <h4 style="color:var(--primary)">Today Jawak</h4>
+                <span class="value" style="font-size:20px;">₹{{ today_expenses|default(0) }}</span>
+            </div>
+        </a>
+            <!-- SECRET PROFIT CARD -->
+{% if role == "owner" %}
+<a href="/profit-report" style="text-decoration:none;color:inherit;">
+<div class="kpi-card" style="border-bottom:4px solid #10b981;">
+    <h4 style="color:#059669;">Total Profit</h4>
+    <span class="value" style="color:#047857">
+        ₹{{ "{:,.0f}".format(net_profit|default(0)) }}
+    </span>
+    <small style="font-size:10px;color:#065f46;">
+        Click for analytics
+    </small>
+</div>
+</a>
+{% endif %}
+    </div>
+
+    <div class="data-box">
+        <h3 style="font-size:1.1rem;margin-bottom:20px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-user-shield" style="color:var(--primary);"></i> Staff Activity
+        </h3>
+
+
+        <table class="staff-table">
+            <thead>
+                <tr>
+                    <th>Staff</th>
+                    <th>Bills</th>
+                    <th>Sale</th>
+                    <th>Edits</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in staff_data %}
+                <tr>
+                    <td class="staff-cell" data-label="Staff">
+                        <div class="avatar">{{ s.name[0]|upper }}</div>
+                        <div>
+                            <strong>{{ s.name }}</strong>
+                            <div style="font-size: 11px; color: #94a3b8;">Active Session</div>
+                        </div>
+                    </td>
+                    <td data-label="Bills">{{ s.bill_count }}</td>
+                    <td data-label="Sale" style="color:var(--primary); font-weight: 800;">₹{{ "{:,.0f}".format(s.total_sale|default(0)) }}</td>
+                    <td data-label="Edits">
+                    <a href="/rate-update" style="text-decoration:none;">
+                        <span class="edit-badge {{ 'edit-high' if s.edits>3 else 'edit-low' }}">
+                            {{ s.edits }} Edits
+                        </span>
+                    </a>
+                    </td>
+                    <td data-label="Status">
+                        <span style="color:#10b981; font-weight: 800;">● Active</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    </div>
+</div>
+<script>
+// Search logic (Original content preserved)
+const input = document.getElementById("globalSearch");
+const resultsBox = document.getElementById("searchResults");
+let selectedIndex = -1;
+let items = [];
+
+input.addEventListener("input", async () => {
+    const q = input.value.trim();
+    if(q.length < 2){ resultsBox.style.display="none"; return; }
+    const res = await fetch(`/api/global-search?q=${q}`);
+    const data = await res.json();
+    if(!data.length){ resultsBox.style.display="none"; return; }
+    items = data;
+    selectedIndex = -1;
+    resultsBox.innerHTML = data.map((item,i)=>{
+const icon =
+    item.type==="product" ? "📦" :
+    item.type==="customer" ? "👤" :
+    item.type==="staff" ? "🧑‍💼" :
+    item.type==="supplier" ? "🏭" :
+    item.type==="page" ? "📊" :
+    "🧾";
+        return `<div class="search-item" data-index="${i}"><span class="icon">${icon}</span>${item.name}<small class="tag" style="float:right; opacity:0.6;">${item.type}</small></div>`;
+    }).join("");
+    resultsBox.style.display="block";
+});
+
+input.addEventListener("keydown", e=>{
+    const nodes = document.querySelectorAll(".search-item");
+    if(!nodes.length) return;
+    if(e.key==="ArrowDown"){ selectedIndex = (selectedIndex+1) % nodes.length; updateSelection(nodes); }
+    if(e.key==="ArrowUp"){ selectedIndex = (selectedIndex-1+nodes.length) % nodes.length; updateSelection(nodes); }
+    if(e.key==="Enter" && selectedIndex>=0){ openItem(items[selectedIndex]); }
+});
+
+function updateSelection(nodes){
+    nodes.forEach(n=>n.style.background="white");
+    if(selectedIndex >= 0) nodes[selectedIndex].style.background="#f0f7ff";
+}
+
+resultsBox.addEventListener("click", e=>{
+    const el = e.target.closest(".search-item");
+    if(!el) return;
+    openItem(items[el.dataset.index]);
+});
+
+function openItem(item){
+    if(item.type==="product")
+        window.location = "/inventory"
+
+    else if(item.type==="customer")
+        window.location = "/customers"
+
+    else if(item.type==="bill")
+        window.location = "/receipts?bill_id=" + item.id
+
+    else if(item.type==="staff")
+        window.location = "/users"
+
+    else if(item.type==="supplier")
+        window.location = "/suppliers"
+
+    else if(item.type==="page")
+        window.location = item.url
+}
+
+
+
+function confirmCloseDay(){
+
+let confirmClose = confirm(
+"⚠ Are you sure you want to close the day?\n\n" +
+"After closing:\n" +
+"• Bills cannot be edited\n" +
+"• Payments cannot be changed\n" +
+"• Reports will be locked\n\n" +
+"Click OK to continue."
+);
+
+return confirmClose;
+
+}
+
+
+document.addEventListener("click", e=>{
+    if(!e.target.closest(".search-box")){ resultsBox.style.display="none"; }
+});
+</script>
+</body>
+</html>

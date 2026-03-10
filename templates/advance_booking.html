@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advance Booking | SR Steel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+
+:root{
+    --primary:#2563eb;
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --border:#e5e7eb;
+    --muted:#6b7280;
+    --green:#16a34a;
+    --red:#dc2626;
+}
+
+body{
+    margin:0;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg);
+}
+
+.wrapper{display:flex;}
+
+.main{
+flex:1;
+margin-left:230px;
+padding:25px;
+transition:.3s;
+min-height:100vh;
+}
+
+/* tablet */
+@media(max-width:1024px){
+.main{
+margin-left:0;
+padding:18px;
+}
+}
+
+/* mobile */
+@media(max-width:600px){
+.main{
+padding:12px;
+}
+}
+
+@media(max-width:768px){
+
+table thead{
+display:none;
+}
+
+table tbody tr{
+display:block;
+background:white;
+border-radius:10px;
+margin-bottom:12px;
+padding:12px;
+box-shadow:0 3px 8px rgba(0,0,0,.05);
+}
+
+table tbody tr td{
+display:flex;
+justify-content:space-between;
+padding:6px 0;
+border:none;
+}
+
+table tbody tr td::before{
+content:attr(data-label);
+font-weight:700;
+color:var(--muted);
+font-size:11px;
+}
+
+}
+@media(max-width:600px){
+
+button{
+width:100%;
+}
+
+.header-bar button{
+width:auto;
+}
+
+}
+@media(max-width:600px){
+
+#itemsTable thead{
+display:none;
+}
+
+#itemsTable tr{
+display:block;
+background:white;
+margin-bottom:10px;
+padding:10px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+
+#itemsTable td{
+display:flex;
+justify-content:space-between;
+align-items:center;
+border:none;
+padding:6px 0;
+}
+
+#itemsTable td::before{
+content:attr(data-label);
+font-weight:600;
+color:var(--muted);
+font-size:11px;
+}
+
+}
+/* mobile */
+@media(max-width:600px){
+    .main{
+        padding:12px;
+    }
+}
+
+.header-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.header-bar h2{
+    margin:0;
+    font-size:22px;
+}
+
+@media(max-width:600px){
+
+.header-bar{
+flex-direction:column;
+align-items:flex-start;
+gap:10px;
+}
+
+}
+.card{
+    background:var(--card);
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+    margin-bottom:25px;
+}
+
+.card h3{
+    margin-top:0;
+    margin-bottom:15px;
+}
+
+.form-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+}
+
+/* tablet */
+@media(max-width:1000px){
+.form-grid{
+grid-template-columns:repeat(2,1fr);
+}
+}
+
+/* mobile */
+@media(max-width:600px){
+.form-grid{
+grid-template-columns:1fr;
+}
+}
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:4px;
+}
+
+input,select{
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:6px;
+}
+
+button{
+padding:10px 14px;
+border:none;
+border-radius:8px;
+background:var(--primary);
+color:white;
+font-weight:600;
+cursor:pointer;
+font-size:14px;
+}
+
+@media(max-width:600px){
+button{
+width:100%;
+margin-top:8px;
+}
+}
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+
+th{
+    text-align:left;
+    padding:10px;
+    background:#f8fafc;
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+
+td{
+    padding:10px;
+    border-top:1px solid var(--border);
+}
+
+tbody tr:hover{
+    background:#f9fafb;
+}
+
+.badge{
+    padding:4px 8px;
+    font-size:11px;
+    border-radius:6px;
+    background:#e0f2fe;
+    color:#0284c7;
+}
+
+.action-col{
+display:flex;
+gap:6px;
+flex-wrap:wrap;
+align-items:center;
+}
+
+#itemsTable input{
+width:100%;
+box-sizing:border-box;
+}
+
+@media(max-width:600px){
+
+.order-total-box{
+justify-content:flex-start !important;
+}
+
+}
+
+.search-results div{
+padding:8px 10px;
+cursor:pointer;
+font-size:13px;
+}
+
+.search-results div:hover{
+background:#f1f5f9;
+}
+
+#itemsTable td{
+position:relative;
+overflow:visible;
+}
+
+.search-results{
+position:absolute;
+top:100%;
+left:0;
+right:0;
+background:white;
+border:1px solid #ddd;
+border-radius:6px;
+box-shadow:0 4px 10px rgba(0,0,0,.08);
+z-index:9999;
+max-height:200px;
+overflow-y:auto;
+}
+
+.action-col i{
+font-size:16px;
+padding:6px;
+border-radius:6px;
+transition:.2s;
+}
+
+.action-col i:hover{
+background:#f1f5f9;
+}
+
+    .search-results div{
+padding:8px 10px;
+cursor:pointer;
+}
+
+.search-results div:hover{
+background:#f1f5f9;
+}
+
+    .table-wrapper{
+overflow-x:auto;
+overflow-y:visible;
+}
+
+#itemsTable tbody{
+overflow:visible;
+}
+
+#itemsTable td{
+position:relative;
+overflow:visible;
+}
+
+.search-results{
+position:absolute;
+top:100%;
+left:0;
+right:0;
+background:white;
+border:1px solid #ddd;
+border-radius:6px;
+box-shadow:0 6px 14px rgba(0,0,0,.1);
+z-index:99999;
+max-height:200px;
+overflow-y:auto;
+display:block;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+{% include 'sidebar.html' %}
+
+<div class="main">
+
+<div class="header-bar">
+
+<h2>Advance Booking</h2>
+
+<div style="display:flex;gap:10px;">
+<button onclick="scrollToHistory()">
+<i class="fa fa-history"></i> History
+</button>
+</div>
+
+</div>
+
+<!-- NEW BOOKING -->
+
+<div class="card">
+
+<h3>New Booking</h3>
+
+<form method="POST">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Customer Name</label>
+<input type="text" name="customer_name" required>
+</div>
+
+<div class="form-group">
+<label>Mobile</label>
+<input type="text" name="mobile" required>
+</div>
+
+<div class="form-group">
+<label>Delivery Date</label>
+<input type="date" name="delivery_date" required>
+</div>
+
+<div class="form-group">
+<label>Advance Amount</label>
+<input type="number" name="advance_amount" required>
+</div>
+
+<div class="form-group">
+<label>Payment Mode</label>
+<select name="payment_mode" id="payment_mode" onchange="toggleUpi()">
+<option value="Cash">Cash (Galla)</option>
+<option value="Owner_UPI">Owner UPI</option>
+<option value="Staff_UPI">Staff UPI</option>
+</select>
+</div>
+
+<div class="form-group" id="upiBox" style="display:none;">
+<label>UPI ID</label>
+<input type="text" name="upi_id">
+</div>
+
+</div>
+
+<br>
+
+<div class="table-wrapper">
+
+<table id="itemsTable">
+
+<thead>
+<tr>
+<th>Product</th>
+<th style="width:80px;">Qty</th>
+<th style="width:100px;">Rate</th>
+<th style="width:120px;">Total</th>
+<th style="width:50px;"></th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<br>
+
+<button type="button" onclick="addRow()">+ Add Product</button>
+
+<br><br>
+
+<div class="order-total-box" style="display:flex;justify-content:flex-end;">
+
+<div>
+
+<label>Order Value</label>
+
+<div style="font-size:18px;font-weight:700;color:var(--green);">
+₹ <span id="lockedTotalDisplay">0.00</span>
+</div>
+
+<input type="hidden" name="locked_rate" id="lockedTotalInput">
+
+</div>
+
+</div>
+
+<br>
+
+<button type="submit">
+<i class="fa fa-save"></i> Save Advance Booking
+</button>
+
+</form>
+
+</div>
+
+<!-- HISTORY -->
+
+<div class="card" id="advanceHistory">
+
+<h3>Advance History</h3>
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+<tr>
+<th>Customer</th>
+<th>Items</th>
+<th>Advance</th>
+<th>Payment</th>
+<th>Delivery</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for b in bookings %}
+
+<tr>
+
+<td>
+<b>{{b.customer_name}}</b><br>
+<small>{{b.phone}}</small>
+</td>
+
+<td>
+
+{% if b.booking_items %}
+
+{% for item in b.booking_items %}
+<div>{{ item.product_name }} ({{ item.qty }})</div>
+{% endfor %}
+
+{% else %}
+
+<small style="color:#6b7280;">No items</small>
+
+{% endif %}
+
+</td>
+
+<td>
+<strong style="color:#16a34a;">
+₹{{b.advance_amount}}
+</strong>
+</td>
+
+<td>
+
+{% if b.payment_mode == "Cash" %}
+<span style="color:#16a34a;font-weight:600;">Cash</span>
+
+{% elif b.payment_mode == "Owner_UPI" %}
+<span style="color:#2563eb;font-weight:600;">Owner UPI</span>
+
+{% elif b.payment_mode == "Staff_UPI" %}
+<span style="color:#9333ea;font-weight:600;">Staff UPI</span>
+
+{% endif %}
+
+</td>
+
+<td>{{b.delivery_date}}</td>
+
+<td>
+<span class="badge">{{b.status}}</span>
+</td>
+
+<td class="action-col">
+
+<a href="/generate-bill/{{b.id}}" title="Generate Bill">
+<i class="fa fa-file-invoice" style="color:#7c3aed;"></i>
+</a>
+
+<a href="/customer-ledger?name={{b.customer_name}}&mobile={{b.phone}}" title="Customer Ledger">
+<i class="fa fa-book" style="color:#2563eb;"></i>
+</a>
+
+<a href="/advance-receipt/{{b.id}}" title="Advance Receipt">
+<i class="fa fa-receipt" style="color:#16a34a;"></i>
+</a>
+
+<a href="/delete-advance/{{b.id}}" onclick="return confirm('Delete this advance booking?')" title="Delete Booking">
+<i class="fa fa-trash" style="color:#dc2626;"></i>
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function addRow(){
+
+let tr=document.createElement("tr");
+
+tr.innerHTML=`
+
+<td style="position:relative">
+
+<input class="pname" name="product_name[]" placeholder="Enter Product" autocomplete="off" required oninput="debounceSearch(this)">
+<input type="hidden" class="pid" name="product_id[]">
+
+<div class="search-results" style="
+position:absolute;
+background:white;
+border:1px solid #ddd;
+width:100%;
+z-index:1000;
+display:none;
+max-height:200px;
+overflow:auto;
+"></div>
+
+</td>
+
+<td>
+<input type="number" class="qty" placeholder="Enter Qty" name="qty[]" value="1">
+</td>
+
+<td>
+<input type="number" class="rate" placeholder="Enter Rate " name="rate[]">
+</td>
+
+<td class="amt">₹ 0.00</td>
+
+<td>
+<i class="fa fa-trash" style="color:#dc2626;cursor:pointer"
+onclick="this.closest('tr').remove();calcTotal();"></i>
+</td>
+
+`;
+
+document.querySelector("#itemsTable tbody").appendChild(tr);
+
+tr.querySelector(".qty").addEventListener("input",calcTotal);
+tr.querySelector(".rate").addEventListener("input",calcTotal);
+
+}
+
+function calcTotal(){
+
+let sum=0;
+
+document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+
+let q=parseFloat(r.querySelector(".qty").value)||0;
+let rate=parseFloat(r.querySelector(".rate").value)||0;
+
+let total=q*rate;
+
+r.querySelector(".amt").innerText="₹ "+total.toFixed(2);
+
+sum+=total;
+
+});
+
+document.getElementById("lockedTotalDisplay").innerText=sum.toFixed(2);
+document.getElementById("lockedTotalInput").value=sum.toFixed(2);
+
+}
+
+window.onload=function(){
+addRow();
+}
+
+function scrollToHistory(){
+document.getElementById("advanceHistory").scrollIntoView({behavior:"smooth"});
+}
+
+function toggleUpi(){
+
+let mode=document.getElementById("payment_mode").value;
+let upi=document.getElementById("upiBox");
+
+if(mode==="Owner_UPI"||mode==="Staff_UPI"){
+upi.style.display="block";
+}else{
+upi.style.display="none";
+}
+
+}
+
+function searchProduct(input){
+
+let query=input.value;
+
+if(query.length<2) return;
+
+fetch("/api/search-product?q="+query)
+.then(res=>res.json())
+.then(data=>{
+
+let box=input.parentElement.querySelector(".search-results");
+
+box.innerHTML="";
+
+data.forEach(p=>{
+
+let div=document.createElement("div");
+
+div.style.padding="6px";
+div.style.cursor="pointer";
+div.innerText=p.product_name+" (₹"+p.selling_rate+")";
+
+div.onclick=function(){
+
+input.value=p.product_name;
+input.closest("td").querySelector(".pid").value=p.id;
+
+let row=input.closest("tr");
+
+row.querySelector(".rate").value=p.selling_rate;
+
+calcTotal();
+
+box.style.display="none";
+
+}
+
+box.appendChild(div);
+
+});
+
+box.style.display="block";
+
+});
+
+}
+let searchTimer;
+
+function debounceSearch(input){
+
+clearTimeout(searchTimer);
+
+searchTimer=setTimeout(()=>{
+searchProduct(input);
+},300);
+
+}
+</script>
+</body>
+</html>

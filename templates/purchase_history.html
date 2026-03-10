@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History | SR Steel ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-soft: #e8f0ff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --sidebar-width: 270px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at 10% 10%, #f1f5ff 0%, transparent 40%),
+                        linear-gradient(180deg, #f8fafc 0%, #eef2f7 60%);
+            color: var(--dark);
+        }
+
+        .app-layout { zoom: 0.85; }
+
+        .main-container {
+            margin-left: var(--sidebar-width);
+            padding: 28px 64px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* DASHBOARD STYLE HEADER */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            padding: 20px 28px;
+            border-radius: 20px;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        /* KPI SUMMARY CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .stat-card label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+        .stat-card .value { font-size: 24px; font-weight: 800; display: block; margin-top: 5px; }
+
+        /* DATA BOX (TABLE CONTAINER) */
+        .data-box {
+            background: white;
+            padding: 26px;
+            border-radius: 20px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .history-table th {
+            padding: 10px 16px;
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            text-align: left;
+        }
+
+        .history-table td {
+            padding: 16px;
+            background: #f8fafc;
+            font-weight: 600;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .history-table tr:hover td { background: #f1f5ff; }
+
+        .history-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
+        .history-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
+
+        /* BADGES */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .badge.pending { background: #fef2f2; color: var(--danger); }
+        .badge.paid { background: #ecfdf5; color: var(--success); }
+
+        @media (max-width: 1024px) {
+            .main-container { margin-left: 0; padding: 20px; }
+            .app-layout { zoom: 1; }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="app-layout">
+    <div class="main-container">
+
+        <header class="page-header">
+            <div>
+                <h2 style="font-weight:800; letter-spacing:-0.5px;">
+                    PURCHASE <span style="color:var(--primary)">HISTORY</span>
+                </h2>
+                <small style="color:#64748b; font-weight:600;">Manage your supplier procurement</small>
+            </div>
+            <a href="/purchase-bill" class="badge paid" style="text-decoration:none; padding:10px 20px;">+ New Purchase</a>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <label>Total Purchase</label>
+                <span class="value">₹ {{ "{:,.2f}".format(stats.total_buy or 0) }}</span>
+            </div>
+            <div class="stat-card" style="border-color: var(--success);">
+                <label>Total Paid</label>
+                <span class="value" style="color:var(--success)">₹ {{ "{:,.2f}".format(stats.total_paid or 0) }}</span>
+            </div>
+            <div class="stat-card" style="border-color: var(--danger);">
+                <label>Total Baki</label>
+                <span class="value" style="color:var(--danger)">₹ {{ "{:,.2f}".format(stats.total_due or 0) }}</span>
+            </div>
+        </div>
+
+        <div class="data-box">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Supplier / Bill</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in purchases %}
+                    <tr>
+                        <td>{{ p.date }}</td>
+                        <td>
+                            <div style="font-weight:800; color:var(--dark);">{{ p.supplier }}</div>
+                            <div style="font-size:11px; color:#94a3b8;">Bill #{{ p.id }}</div>
+                        </td>
+                        <td>
+                            {% if p.balance_amount > 0 %}
+                                <span class="badge pending">Pending</span>
+                            {% else %}
+                                <span class="badge paid">Paid</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:var(--dark)">₹ {{ "{:,.2f}".format(p.total_amount) }}</td>
+                        <td style="color:var(--success)">₹ {{ "{:,.2f}".format(p.paid_amount) }}</td>
+                        <td style="color:var(--danger)">₹ {{ "{:,.2f}".format(p.balance_amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

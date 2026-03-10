@@ -1,0 +1,1312 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing | SR Steel ERP (Pro)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+:root{
+    --primary:#2563eb;
+    --success:#10b981;
+    --danger:#ef4444;
+    --dark:#0f172a;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+    --warning:#f59e0b;
+}
+
+#calc-display{
+    background:#0f172a;
+    color:#fff;
+    font-size:22px;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+    text-align:right;
+    font-weight:700;
+    overflow:hidden;
+}
+
+.calc-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px;
+}
+
+.calc-btn{
+    background:#334155;
+    color:#fff;
+    border:none;
+    padding:10px;
+    border-radius:6px;
+    font-size:14px;
+    cursor:pointer;
+}
+
+.calc-btn:hover{
+    background:#475569;
+}
+
+.calc-btn.eq{
+    background:#10b981;
+}
+
+.calc-btn.zero{
+    grid-column:span 2;
+}
+
+/* ===== ITEM TABLE PROFESSIONAL WIDTH ===== */
+table.items th:nth-child(1),
+table.items td:nth-child(1){ width:40%; }
+
+table.items th:nth-child(2),
+table.items td:nth-child(2){ width:90px; }
+
+table.items th:nth-child(3),
+table.items td:nth-child(3){ width:90px; }
+
+table.items th:nth-child(4),
+table.items td:nth-child(4){ width:120px; }
+
+table.items th:nth-child(5),
+table.items td:nth-child(5){ width:120px; text-align:right; }
+
+table.items th:nth-child(6),
+table.items td:nth-child(6){ width:40px; text-align:center; }
+
+table.items input,
+table.items select{
+    width:100%;
+    box-sizing:border-box;
+}
+
+table.items td.amt{
+    text-align:right;
+    font-weight:800;
+    padding-right:10px;
+}
+
+
+/* RESET */
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg);
+}
+
+/* =============================
+   MAIN LAYOUT (SIDEBAR SYNC)
+============================= */
+.main{
+    margin-left:230px;
+    padding:20px;
+    transition:.3s;
+}
+
+/* sidebar collapsed */
+.sidebar.collapsed ~ .main{
+    margin-left:68px;
+}
+
+/* tablet */
+@media(max-width:1024px){
+    .main{
+        margin-left:0;
+        margin-top:70px;
+        padding:16px;
+    }
+}
+
+/* mobile */
+@media(max-width:600px){
+    .main{
+        padding:12px;
+    }
+}
+
+table.items{
+    width:100%;
+    border-collapse:collapse;
+    min-width:520px;
+    table-layout:fixed;   /* ✅ prevent shrink */
+}
+
+
+table.items tbody{
+    display:table-row-group;   /* reset */
+}
+
+/* =============================
+   HEADER
+============================= */
+.bill-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+}
+
+.bill-header h2{
+    font-size:20px;
+    margin:0;
+}
+
+/* mobile header */
+@media(max-width:600px){
+    .bill-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .bill-header h2{
+        font-size:18px;
+    }
+}
+
+/* =============================
+   GRID INPUTS
+============================= */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.input-group{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+label{
+    font-size:10px;
+    font-weight:800;
+    color:#64748b;
+    text-transform:uppercase;
+}
+
+input,select{
+    padding:9px;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    font-weight:600;
+    font-size:13px;
+}
+
+/* laptop */
+@media(max-width:1200px){
+    .grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* tablet */
+@media(max-width:900px){
+    .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* mobile */
+@media(max-width:600px){
+    .grid{grid-template-columns:1fr;}
+}
+
+/* =============================
+   TABLE
+============================= */
+..table-container{
+    overflow-x:auto;
+    overflow-y:visible;
+    position:relative;
+    z-index:5;   /* 👈 ensure dropdown layer above button */
+}
+
+table.items{
+    width:100%;
+    border-collapse:collapse;
+    min-width:520px;
+}
+table.items{
+    position:relative;
+    z-index:1;
+}
+
+table.items td{
+    padding:6px;
+    vertical-align:middle;
+    height:42px;   /* ✅ stable row height */
+}
+
+
+/* mobile summary */
+@media(max-width:600px){
+    .summary{
+        flex-direction:column;
+        text-align:center;
+        font-size:16px;
+    }
+}
+
+/* =============================
+   BUTTON GRID
+============================= */
+.btn-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-top:14px;
+}
+
+table.items td{
+    padding:6px;
+    position:relative;   /* ✅ important */
+}
+
+.btn{
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    font-weight:800;
+    color:#fff;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    font-size:12px;
+}
+
+/* laptop */
+@media(max-width:1100px){
+    .btn-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* tablet */
+@media(max-width:768px){
+    .btn-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* mobile */
+@media(max-width:480px){
+    .btn-grid{grid-template-columns:1fr;}
+}
+
+/* =============================
+   CALCULATOR
+============================= */
+.calc-side{
+    position:fixed;
+    right:18px;
+    top:110px;
+    width:260px;
+    background:#1e293b;
+    border-radius:12px;
+    padding:12px;
+    box-shadow:0 20px 40px rgba(0,0,0,.35);
+    display:none;
+    z-index:400;
+}
+
+/* tablet */
+@media(max-width:992px){
+    .calc-side{
+        right:10px;
+        bottom:20px;
+        top:auto;
+        width:230px;
+    }
+}
+
+/* mobile */
+@media(max-width:600px){
+    .calc-side{
+        width:94%;
+        right:3%;
+        bottom:10px;
+    }
+}
+
+/* ============================
+   SEARCH RESULT — FINAL STABLE
+============================= */
+.search-res{
+    position:absolute;
+    top:100%;
+    left:0;
+    width:100%;
+    min-width:260px;
+
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:8px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.18);
+
+    z-index:10000;   /* higher than table */
+    display:none;
+
+    max-height:240px;
+    overflow-y:auto;
+}
+
+.search-res div{
+    padding:10px 12px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.search-res div:last-child{
+    border-bottom:none;
+}
+
+.search-res div:hover{
+    background:#f8fafc;
+}
+
+.search-res span{
+    font-weight:700;
+    color:#0f172a;
+    font-size:13px;
+}
+
+.search-res b{
+    font-size:11px;
+    color:#2563eb;
+}
+
+table.items thead th{
+    position:sticky;
+    top:0;
+    background:#fff;
+    z-index:2;
+}
+
+<!--inp.addEventListener("focus", () => {-->
+<!--    if(inp.value.length>0){-->
+<!--        searchProduct(inp);-->
+<!--    }-->
+<!--});-->
+
+.add-item-btn{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border:1px dashed #cbd5e1;
+    background:#f1f5f9;
+    color:#334155;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+}
+.add-item-btn:hover{
+    background:#e2e8f0;
+}
+
+
+/* ==============================
+   MOBILE BILLING ROW DESIGN
+============================== */
+
+@media(max-width:600px){
+
+table.items thead{
+display:none;
+}
+
+table.items{
+min-width:100%;
+}
+
+table.items tbody tr{
+display:block;
+background:white;
+border-radius:10px;
+padding:12px;
+margin-bottom:12px;
+box-shadow:0 3px 8px rgba(0,0,0,.05);
+}
+
+table.items td{
+display:flex;
+justify-content:space-between;
+align-items:center;
+border:none;
+padding:6px 0;
+}
+
+table.items td::before{
+content:attr(data-label);
+font-weight:700;
+font-size:11px;
+color:#64748b;
+}
+
+/* better inputs */
+table.items input,
+table.items select{
+width:55%;
+}
+
+}
+/* =============================
+   MODAL
+============================= */
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:100001;
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-box{
+    background:#fff;
+    padding:24px;
+    border-radius:14px;
+    width:360px;
+    max-width:92%;
+    text-align:center;
+}
+
+.card{
+    background:#fff;
+    border-radius:14px;
+    padding:18px;
+    border:1px solid var(--border);
+    box-shadow:0 4px 10px rgba(0,0,0,.05);
+
+    display:block;          /* ✅ ensure natural height */
+    overflow:visible;       /* ✅ allow expansion */
+}
+
+</style>
+    </head>
+
+    <body>
+    {% include 'sidebar.html' %}
+
+    <div class="main">
+
+    <form id="billingForm">
+    <input type="hidden" name="status" id="status_val">
+    <input type="hidden" id="saved_bill_id">
+    <input type="hidden" name="staff_id" id="staff_id">
+    <input type="hidden" name="advance_id" value="{{advance_booking.id if advance_booking else ''}}">
+
+    <div class="card">
+
+    <div class="bill-header">
+        <h2><i class="fa fa-bolt"></i> SR Smart Billing</h2>
+
+        <div style="display:flex;align-items:center;gap:8px;">
+            <select name="bill_type" id="billType">
+                <option value="Regular">REGULAR BILL</option>
+                <option value="GST">GST INVOICE</option>
+                <option value="ESTIMATE">ESTIMATE (KACHHA)</option>
+            </select>
+
+            <div class="calc-toggle" onclick="toggleCalc(event)">
+                <i class="fas fa-calculator"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="input-group"><label>Customer Name</label><input name="customer_name" id="cust_name"
+value="{{ bill.customer_name if bill else '' }}" required></div>
+        <div class="input-group"><label>Mobile</label><input name="customer_mobile" id="cust_mobile"
+value="{{ bill.customer_mobile if bill else '' }}"></div>
+        <div class="input-group" id="gstin_box" style="display:none">
+<label>Buyer GSTIN</label>
+<input type="text" name="buyer_gstin" id="buyer_gstin" placeholder="Enter GSTIN">
+</div>
+        <div class="input-group">
+        <label>Select Hamal (Labour)</label>
+        <select name="hamal_id" id="hamal_select">
+                <option value="">-- No Transport --</option>
+                {% for h in hamals %}
+                <option value="{{h.id}}">{{h.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="input-group">
+        <label>Payment Mode</label>
+
+        <select name="upi_account" id="upi_account" onchange="handleUpiMode()">
+            <option value="Cash">Cash (Galla)</option>
+            <option value="Owner">Owner UPI</option>
+            <option value="Staff">Staff Account</option>
+        </select>
+        </div>
+
+        <!-- STAFF -->
+        <div class="input-group" id="staff_box" style="display:none">
+        <label>Select Staff</label>
+        <select id="staff_select" onchange="loadStaffUpi()">
+        <option value="">Select staff</option>
+        {% for s in staff %}
+        <option value="{{s.id}}" data-upi="{{s.upi_id}}">
+        {{s.name}}
+        </option>
+        {% endfor %}
+        </select>
+        </div>
+
+        <!-- UPI -->
+        <div class="input-group" id="upi_box" style="display:none">
+        <label>UPI ID</label>
+        <input type="text" name="upi_id" id="upi_id" placeholder="Enter UPI">
+        <input type="hidden" name="upi_holder" id="upi_holder">
+        </div>
+    </div>
+    {% if advance_booking %}
+
+<script>
+
+window.addEventListener("DOMContentLoaded", function(){
+
+document.getElementById("cust_name").value = "{{advance_booking.name}}"
+document.getElementById("cust_mobile").value = "{{advance_booking.phone}}"
+
+// ⭐ ADD THIS PART
+document.getElementById("upi_account").value = "{{advance_booking.payment_mode}}"
+
+if("{{advance_booking.upi_id}}"){
+    document.getElementById("upi_id").value = "{{advance_booking.upi_id}}"
+}
+
+document.getElementById("paid").value = "{{advance_booking.advance_amount}}"
+let items = {{advance_items|tojson}}
+
+items.forEach(function(item){
+
+addRow()
+
+let rows = document.querySelectorAll("#itemsTable tbody tr")
+let last = rows[rows.length-1]
+
+last.querySelector(".pname").value = item.product_name
+last.querySelector(".pid").value = item.product_id
+last.querySelector(".qty").value = item.qty
+last.querySelector(".rate").value = item.rate
+
+})
+
+calcTotal()
+
+})
+
+</script>
+
+{% endif %}
+    <div class="table-container">
+    <table class="items" id="itemsTable">
+    <thead>
+    <tr>
+    <th>Item (1-2 words)</th>
+    <th width="90">Qty</th>
+    <th width="90">Unit</th>
+    <th width="120">Rate</th>
+    <th width="120">Amount</th>
+    <th></th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+    </table>
+    </div>
+
+
+<button type="button" class="add-item-btn" onclick="addRow()">+ Add Item</button>
+    <div class="grid" style="margin-top:20px">
+    <div class="input-group" id="gstGroup">
+    <label>Apply GST %</label>
+    <select name="gst_rate" id="gstRate" onchange="calcTotal()">
+    <option value="0">0% (No Tax)</option>
+    <option value="5">5%</option>
+    <option value="12">12%</option>
+    <option value="18" selected>18%</option>
+    <option value="28">28%</option>
+    </select>
+    </div>
+        <div class="input-group">
+    <label>Hamali Charges</label>
+    <input type="number" name="hamali" id="hamali" value="0" oninput="calcTotal()">
+    </div>
+
+    <div class="input-group">
+    <label>Transport Bhada</label>
+    <input type="number" name="bhada" id="bhada" value="0" oninput="calcTotal()">
+    </div>
+    <div class="input-group"><label>JAMA Amount</label><input type="number" name="paid_amount" id="paid" value="0" oninput="calcTotal()"></div>
+    </div>
+
+    <div id="gstBox" style="display:none; background:#f1f5f9; padding:15px; border-radius:10px; margin-bottom:15px" class="grid">
+    <div class="input-group"><label>Taxable Value</label><input id="taxable" readonly></div>
+    <div class="input-group"><label>GST Amount</label><input id="gst_amt" readonly></div>
+    </div>
+
+    <div class="summary">
+     <div id="bakiSummary" style="
+display:none;
+margin-top:10px;
+background:#fff7ed;
+border:1px solid #fed7aa;
+padding:10px;
+border-radius:8px;
+font-weight:700;
+color:#9a3412">
+</div>
+    <div id="totalBox" style="
+margin-top:12px;
+padding:12px;
+border-radius:10px;
+background:#ecfeff;
+border:1px solid #67e8f9;
+font-weight:800;
+font-size:18px;
+display:none;
+">
+Grand Total: ₹ <span id="gTotal">0.00</span>
+<span style="font-size:14px;margin-left:10px;color:#475569">
+Balance: ₹ <span id="bal">0.00</span>
+</span>
+</div>
+
+    <div class="btn-grid">
+<button type="button" class="btn" style="background:var(--success)" onclick="processNill()"><i class="fa fa-check"></i>NILL</button>    <button type="button" class="btn" style="background:var(--warning)" onclick="openBaki()"><i class="fa fa-hand-holding-usd"></i>BAKI</button>
+    <button type="button" class="btn" style="background:var(--danger)" onclick="finalProcess('PENDING')"><i class="fa fa-clock"></i>PENDING(Draft)</button>
+    <button type="button" class="btn" style="background:var(--primary)" onclick="finalProcess('DONE')"><i class="fa fa-save"></i>DONE</button>
+    <button type="button" class="btn" style="background:#6366f1" onclick="printBill()"><i class="fa fa-print"></i>PRINT</button>
+    <button type="button" class="btn" style="background:#0ea5e9" onclick="window.print()"><i class="fa fa-file-pdf"></i>PDF</button>
+    <button type="button" class="btn" style="background:#475569" onclick="finalProcess('ESTIMATE')"><i class="fa fa-file-invoice"></i>ESTIMATE</button>
+    <button type="button" class="btn" style="background:#ec4899" onclick="alert('Advance feature coming soon')"><i class="fa fa-coins"></i>ADVANCE</button>
+     </div>
+
+    </div>
+    </form>
+    </div>
+    <div class="modal" id="bakiModal">
+<div class="modal-box">
+
+    <h3>BAKI PAYMENT</h3>
+
+    <div id="m_bill_info" style="margin-bottom:10px"></div>
+
+    <label>Paid Amount</label>
+    <input type="number" id="m_paid" oninput="updateM()">
+
+    <div style="margin-top:10px;font-weight:700">
+        Balance: ₹ <span id="m_baki">0</span>
+    </div>
+
+    <div style="margin-top:15px;display:flex;gap:10px;justify-content:center">
+        <button class="btn" style="background:#10b981"
+        onclick="saveBaki()">SAVE</button>
+
+        <button class="btn" style="background:#ef4444"
+        onclick="document.getElementById('bakiModal').style.display='none'">
+        CANCEL
+        </button>
+    </div>
+</div>
+</div>
+    <!-- CALCULATOR PANEL -->
+    <div class="calc-side" id="calcBox">
+    <div id="calc-display">0</div>
+    <div class="calc-grid">
+    <button class="calc-btn" onclick="cClr()">C</button>
+    <button class="calc-btn" onclick="cInp('/')">/</button>
+    <button class="calc-btn" onclick="cInp('*')">*</button>
+    <button class="calc-btn" onclick="cBack()">«</button>
+
+    <button class="calc-btn" onclick="cInp('7')">7</button>
+    <button class="calc-btn" onclick="cInp('8')">8</button>
+    <button class="calc-btn" onclick="cInp('9')">9</button>
+    <button class="calc-btn" onclick="cInp('-')">-</button>
+
+    <button class="calc-btn" onclick="cInp('4')">4</button>
+    <button class="calc-btn" onclick="cInp('5')">5</button>
+    <button class="calc-btn" onclick="cInp('6')">6</button>
+    <button class="calc-btn" onclick="cInp('+')">+</button>
+
+    <button class="calc-btn" onclick="cInp('1')">1</button>
+    <button class="calc-btn" onclick="cInp('2')">2</button>
+    <button class="calc-btn" onclick="cInp('3')">3</button>
+    <button class="calc-btn eq" onclick="cRes()">=</button>
+
+    <button class="calc-btn zero" onclick="cInp('0')">0</button>
+    <button class="calc-btn" onclick="cInp('.')">.</button>
+    </div>
+    </div>
+
+    <script>
+        let EDIT_BILL_ID = "{{ edit_id }}";
+       let BILL_ITEMS = {{ items|tojson if items else '[]' }};
+    let BILL_DATA = {{ bill|tojson if bill else 'null' }};
+    let cd = document.getElementById('calc-display');
+    let lastStatus = "";
+    function cInp(v){ if(cd.innerText=='0') cd.innerText=v; else cd.innerText+=v; }
+    function cClr(){ cd.innerText='0'; }
+    function cBack(){ cd.innerText=cd.innerText.slice(0,-1)||'0'; }
+    function cRes(){ try{ cd.innerText=eval(cd.innerText); }catch{ cd.innerText='Error'; } }
+
+    function toggleCalc(e){
+        e.stopPropagation();
+        let box=document.getElementById("calcBox");
+        box.style.display = box.style.display==="block" ? "none":"block";
+    }
+        document.addEventListener("click", function(e){
+    let box = document.getElementById("calcBox");
+    let toggle = document.querySelector(".calc-toggle");
+
+    if (!box.contains(e.target) && !toggle.contains(e.target)) {
+        box.style.display = "none";
+    }
+});
+
+    /* ===== NAME + MOBILE VALIDATION ===== */
+
+    // Customer Name validation
+    document.getElementById("cust_name").addEventListener("input", function () {
+        let val = this.value;
+
+        // allow only alphabets + space
+        let cleaned = val.replace(/[^a-zA-Z\s]/g, "");
+
+        if (val !== cleaned) {
+            this.value = cleaned;
+        }
+    });
+
+    // Mobile validation (allow digits only)
+    document.getElementById("cust_mobile").addEventListener("input", function () {
+        let val = this.value.replace(/\D/g, ""); // remove non digits
+        this.value = val.slice(0, 10); // max 10 digits
+    });
+
+window.addEventListener("DOMContentLoaded", function(){
+
+    if(EDIT_BILL_ID && BILL_ITEMS.length > 0){
+
+        BILL_ITEMS.forEach(item => {
+
+            addRow();
+
+            let row = document.querySelector("#itemsTable tbody tr:last-child");
+
+            row.querySelector(".pname").value = item.product_name;
+            row.querySelector(".pid").value = item.product_id;
+            row.querySelector(".qty").value = item.qty;
+            row.querySelector(".unit").value = item.unit;
+            row.querySelector(".rate").value = item.rate;
+
+        });
+
+        document.getElementById("hamali").value = BILL_DATA.hamali || 0;
+        document.getElementById("bhada").value = BILL_DATA.bhada || 0;
+        document.getElementById("paid").value = BILL_DATA.paid_amount || 0;
+
+        document.getElementById("saved_bill_id").value = EDIT_BILL_ID;
+
+        calcTotal();
+
+    }else{
+        addRow();
+    }
+
+});
+
+    /* GST only fields */
+    function updateBillUI(){
+        let type=document.getElementById("billType").value;
+        document.getElementById("gstGroup").style.display = (type==="GST")?"flex":"none";
+         // SHOW GSTIN FIELD
+    document.getElementById("gstin_box").style.display =
+        (type === "GST") ? "flex" : "none";
+    }
+    document.getElementById("billType").addEventListener("change",updateBillUI);
+    updateBillUI();
+
+    /* ===== YOUR ORIGINAL JS BELOW UNCHANGED ===== */
+
+function addRow(){
+
+let tr = document.createElement("tr");
+
+tr.innerHTML = `
+
+<td data-label="Product" style="position:relative">
+
+<input type="text" class="pname" name="pName[]">
+<input type="hidden" class="pid" name="pId[]">
+
+<div class="search-res"></div>
+
+<div class="profit-tag" style="
+display:none;
+font-size:11px;
+color:#16a34a;
+font-weight:700;
+margin-top:2px;"></div>
+
+<input type="hidden" class="pPurchaseRate" name="pPurchaseRate[]">
+
+</td>
+
+<td data-label="Qty">
+<input type="number" class="qty" name="pQty[]" value="1" min="0" oninput="calcTotal()">
+</td>
+
+<td data-label="Unit">
+<select class="unit" name="pUnit[]">
+<option value="pcs">pcs</option>
+<option value="kg">kg</option>
+<option value="ft">ft</option>
+<option value="m">m</option>
+</select>
+</td>
+
+<td data-label="Rate">
+<input type="number" class="rate" name="pRate[]" step="0.01" oninput="calcTotal()">
+</td>
+
+<td data-label="Amount" class="amt">0.00</td>
+
+<td data-label="Remove" style="text-align:center">
+<i class="fa fa-trash" style="color:#ef4444;cursor:pointer"
+onclick="this.closest('tr').remove();calcTotal()"></i>
+</td>
+`;
+document.querySelector("#itemsTable tbody").appendChild(tr);
+
+let pname = tr.querySelector(".pname");
+
+pname.addEventListener("input", ()=>searchProduct(pname));
+
+pname.addEventListener("blur", ()=>{
+setTimeout(()=>{
+tr.querySelector(".search-res").style.display="none";
+},150);
+});
+
+}
+    function searchProduct(inp){
+
+        let q = inp.value.trim();
+        let row = inp.closest("tr");
+        let res = row.querySelector(".search-res");
+        // close all other dropdowns
+document.querySelectorAll(".search-res").forEach(d=>{
+    if(d !== res) d.style.display="none";
+});
+
+        if(q.length < 1){
+            res.style.display="none";
+            return;
+        }
+    let billType = document.getElementById("billType").value;
+
+fetch(`/api/search-product?q=${q}&type=${billType}`)
+        .then(r => r.json())
+        .then(data => {
+
+            res.innerHTML = "";
+
+            data.forEach(p => {
+
+                let div = document.createElement("div");
+                div.style.cursor = "pointer";
+
+                div.innerHTML = `
+                    <span>${p.product_name}</span>
+                    <b style="color:${p.stock_quantity < 0 ? 'red':'#2563eb'}">
+₹${p.selling_rate} | Stock ${p.stock_quantity}
+</b>
+                `;
+
+                div.addEventListener("mousedown", function(e){
+                    e.preventDefault();   // 🔥 prevent input blur
+
+                    row.querySelector(".pname").value = p.product_name;
+                    row.querySelector(".pid").value = p.id;
+                    row.querySelector(".pPurchaseRate").value = p.purchase_price || 0;
+                    let rateInput = row.querySelector("input.rate");
+                    if(rateInput){
+                        rateInput.value = p.selling_rate || 0;
+                    }
+
+                    row.dataset.stock = p.stock_quantity || 0;
+
+                    let badge = row.querySelector(".profit-tag");
+                    if(badge){
+                        let profit = (p.selling_rate||0)-(p.purchase_price||0);
+                        badge.innerHTML = `Profit ₹${profit.toFixed(2)} | Stock ${p.stock_quantity}`;
+                        badge.style.display = "block";
+                    }
+
+                    res.style.display="none";
+                    calcTotal();
+                });
+
+                res.appendChild(div);
+            });
+
+            res.style.display = "block";
+        });
+    }
+
+  function calcTotal(){
+
+    let sub = 0;
+
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+
+        let q = parseFloat(r.querySelector(".qty").value) || 0;
+        let rate = parseFloat(r.querySelector(".rate").value) || 0;
+        let stock = parseFloat(r.dataset.stock) || 0;
+        let purchase = parseFloat(r.querySelector(".pPurchaseRate")?.value) || 0;
+
+// stock info only (no restriction)
+if(stock <= 0){
+    let badge = r.querySelector(".profit-tag");
+    if(badge){
+        badge.innerHTML = `⚠ Out of Stock | Current: ${stock}`;
+        badge.style.display = "block";
+        badge.style.color = "#ef4444";
+    }
+}
+
+        // amount
+        let amt = q * rate;
+        r.querySelector(".amt").innerText = amt.toFixed(2);
+        sub += amt;
+
+        // profit
+        let unitProfit = rate - purchase;
+        let totalProfit = unitProfit * q;
+
+        let badge = r.querySelector(".profit-tag");
+        if(badge && purchase > 0){
+            badge.innerHTML = `Profit ₹${totalProfit.toFixed(2)} | Stock ${stock}`;
+            badge.style.display = "block";
+        }
+    });
+
+// ===== FINAL TOTAL SECTION =====
+let hamali = parseFloat(document.getElementById("hamali").value) || 0;
+let bhada  = parseFloat(document.getElementById("bhada").value) || 0;
+let paid   = parseFloat(document.getElementById("paid").value) || 0;
+let gstRate = parseFloat(document.getElementById("gstRate").value) || 0;
+
+let total = sub + hamali + bhada;
+
+// GST
+let billType = document.getElementById("billType").value;
+if(billType === "GST"){
+    document.getElementById("gstBox").style.display = "grid";
+    let gst = (total * gstRate) / 100;
+    total += gst;
+
+    document.getElementById("taxable").value = (total - gst).toFixed(2);
+    document.getElementById("gst_amt").value = gst.toFixed(2);
+}else{
+    document.getElementById("gstBox").style.display = "none";
+}
+
+// 👉 SHOW TOTAL ONLY WHEN ITEMS PRESENT
+let rows = document.querySelectorAll("#itemsTable tbody tr");
+if(rows.length > 0 && sub > 0){
+    document.getElementById("gTotal").innerText = total.toFixed(2);
+    document.getElementById("bal").innerText = (total - paid).toFixed(2);
+
+    let baki = total - paid;
+
+    if(baki > 0){
+        document.getElementById("bakiSummary").style.display="block";
+        document.getElementById("bakiSummary").innerHTML =
+            "Total: ₹"+total.toFixed(2)+" | Paid: ₹"+paid.toFixed(2)+" | Baki: ₹"+baki.toFixed(2);
+    }else{
+        document.getElementById("bakiSummary").style.display="none";
+    }
+}else{
+    document.getElementById("gTotal").innerText = "0.00";
+    document.getElementById("bal").innerText = "0.00";
+    document.getElementById("bakiSummary").style.display="none";
+}
+}
+function handleUpiMode(){
+    let mode = document.getElementById("upi_account").value;
+
+    let staffBox = document.getElementById("staff_box");
+    let upiBox   = document.getElementById("upi_box");
+
+    staffBox.style.display="none";
+    upiBox.style.display="none";
+
+    if(mode==="Owner"){
+        document.getElementById("upi_id").value = OWNER_UPI || "";
+        document.getElementById("upi_holder").value="owner";
+        upiBox.style.display="flex";
+    }
+
+    if(mode==="Staff"){
+        staffBox.style.display="flex";
+        upiBox.style.display="flex";
+        document.getElementById("upi_holder").value="staff";
+    }
+}
+
+function loadStaffUpi(){
+    let sel = document.getElementById("staff_select");
+    let upi = sel.options[sel.selectedIndex].dataset.upi || "";
+    let id  = sel.value;
+
+    document.getElementById("upi_id").value = upi;
+    document.getElementById("staff_id").value = id;
+}
+
+    function openBaki(){
+        document.getElementById("m_bill_info").innerText = "Customer: " + document.getElementById("cust_name").value;
+        document.getElementById("m_paid").value = document.getElementById("paid").value;
+        updateM();
+        document.getElementById("bakiModal").style.display="flex";
+    }
+    function updateM(){
+        let total = parseFloat(document.getElementById("gTotal").innerText);
+        let paid = parseFloat(document.getElementById("m_paid").value)||0;
+        document.getElementById("m_baki").innerText = (total-paid).toFixed(2);
+    }
+    function saveBaki(){
+        document.getElementById("paid").value = document.getElementById("m_paid").value;
+        calcTotal();
+        document.getElementById("bakiModal").style.display="none";
+        finalProcess('BAKI');
+    }
+
+    /* ===== BILLING VALIDATION ===== */
+    /* ===== BILLING VALIDATION ===== */
+    function validateBill(isDraft=false){
+
+    let custInput = document.getElementById("cust_name");
+    let cust = custInput.value.trim();
+
+    // 👉 ONLY REQUIRE NAME IF NOT DRAFT
+    if(!isDraft){
+        if(cust === ""){
+            alert("Enter customer name");
+            custInput.focus();
+            return false;
+        }
+
+        if(!/^[A-Za-z\s]+$/.test(cust)){
+            alert("Customer name must contain only alphabets");
+            custInput.focus();
+            return false;
+        }
+    }
+
+    // Mobile validation only if filled
+    let mobInput = document.getElementById("cust_mobile");
+    let mob = mobInput.value.trim();
+
+    if(mob !== "" && !/^[6-9]\d{9}$/.test(mob)){
+        alert("Enter valid 10 digit mobile number");
+        mobInput.focus();
+        return false;
+    }
+
+ // Items validation only if NOT draft
+let rows = document.querySelectorAll("#itemsTable tbody tr");
+
+if(!isDraft){
+
+    if(rows.length === 0){
+        alert("Add at least one item");
+        return false;
+    }
+
+    for(let i=0;i<rows.length;i++){
+
+        let r = rows[i];
+
+        let name = r.querySelector(".pname").value.trim();
+        let qty = parseFloat(r.querySelector(".qty").value) || 0;
+        let rate = parseFloat(r.querySelector(".rate").value) || 0;
+
+        if(name === ""){
+            alert("Enter item name in row " + (i+1));
+            r.querySelector(".pname").focus();
+            return false;
+        }
+
+        if(qty <= 0){
+            alert("Qty must be > 0 (row " + (i+1) + ")");
+            r.querySelector(".qty").focus();
+            return false;
+        }
+
+        if(rate <= 0){
+            alert("Rate must be > 0 (row " + (i+1) + ")");
+            r.querySelector(".rate").focus();
+            return false;
+        }
+    }
+
+}
+
+    return true;
+}
+
+
+function finalProcess(status){
+
+    let isDraft = (status === "PENDING");
+    if(!validateBill(isDraft)) return;
+
+    if(status==="BAKI"){
+        let paid = parseFloat(document.getElementById("paid").value) || 0;
+        if(paid <= 0){
+            alert("Enter paid amount before BAKI");
+            return;
+        }
+    }
+
+    lastStatus = status;
+    document.getElementById("status_val").value = status;
+
+    let fd = new FormData(document.getElementById("billingForm"));
+
+    let editId = document.getElementById("saved_bill_id").value;
+    if(editId){
+        fd.append("edit_bill_id", editId);
+    }
+
+    fetch("/save-bill",{method:"POST",body:fd})
+    .then(r=>r.json())
+.then(res=>{
+    if(res.success){
+
+        if(status !== "PENDING"){
+            document.getElementById("saved_bill_id").value = res.bill_id;
+        }else{
+            document.getElementById("saved_bill_id").value = "";
+        }
+
+        alert("Bill Saved as " + (status==="PENDING" ? "Draft" : status));
+        clearBilling();
+        // ✅ DONE / NILL → OPEN RECEIPT + CLEAR
+        if(status === "DONE"){
+
+            // open receipt in new tab
+            window.open("/print-bill/" + res.bill_id, "_blank");
+
+            // clear billing for next bill
+            clearBilling();
+            window.location.reload();   // add this
+        }
+
+        }else{
+            alert("Error: "+res.msg);
+        }
+    });
+}
+
+function processNill(){
+
+    // get grand total
+    let total = parseFloat(document.getElementById("gTotal").innerText) || 0;
+
+    if(total <= 0){
+        alert("Add items first");
+        return;
+    }
+
+    // auto set paid = total
+    document.getElementById("paid").value = total.toFixed(2);
+
+    // recalc UI
+    calcTotal();
+
+    // save as DONE
+    finalProcess('DONE');
+}
+
+function printBill(){
+    let id=document.getElementById("saved_bill_id").value;
+
+    if(!id){
+        alert("Pending bill print nahi hota");
+        return;
+    }
+
+    window.open("/print-bill/"+id,"_blank");
+
+    clearBilling();
+}
+
+    function toggleUpiField(){
+    let mode = document.getElementById("upi_account").value;
+    let box = document.getElementById("upi_id_box");
+
+    if(mode === "Owner_UPI" || mode === "Staff_Account"){
+        box.style.display = "flex";
+    }else{
+        box.style.display = "none";
+        document.getElementById("upi_id").value="";
+    }
+}
+
+    document.getElementById("billType").addEventListener("change", function(){
+
+        let type = this.value;
+
+        // ✅ IF ESTIMATE → OPEN ESTIMATE PAGE
+        if(type === "ESTIMATE"){
+            window.location.href = "/estimate";
+            return;
+        }
+
+        // GST UI toggle
+        if(type === "GST"){
+            document.getElementById("gstRate").parentElement.style.display = "flex";
+        }else{
+            document.getElementById("gstRate").parentElement.style.display = "none";
+            document.getElementById("gstBox").style.display = "none";
+        }
+
+        calcTotal();
+    });
+
+function clearBilling(){
+
+    // form reset
+    document.getElementById("billingForm").reset();
+
+    // items table clear
+    document.querySelector("#itemsTable tbody").innerHTML="";
+
+    // totals reset
+    document.getElementById("gTotal").innerText="0.00";
+    document.getElementById("bal").innerText="0.00";
+
+    // baki summary hide
+    document.getElementById("bakiSummary").style.display="none";
+
+    // saved bill id clear
+    document.getElementById("saved_bill_id").value="";
+
+    // add fresh row
+    addRow();
+}
+
+
+    </script>
+    </body>
+    </html>

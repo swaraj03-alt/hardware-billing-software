@@ -1,0 +1,331 @@
+{% include 'sidebar.html' %}
+
+<style>
+
+:root{
+--bg:#f4f6fb;
+--card:#ffffff;
+--dark:#0f172a;
+--muted:#64748b;
+--success:#10b981;
+--danger:#ef4444;
+--warning:#f59e0b;
+--border:#e2e8f0;
+--shadow:0 8px 25px rgba(0,0,0,.05);
+}
+
+body{
+background:var(--bg);
+font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+/* MAIN */
+
+.main-content{
+margin-left:270px;
+padding:30px;
+min-height:100vh;
+}
+
+@media(max-width:1000px){
+.main-content{
+margin-left:0;
+padding-top:80px;
+}
+}
+
+/* SUPPLIER HEADER */
+
+.supplier-header{
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:white;
+border-radius:16px;
+padding:22px;
+margin-bottom:25px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+box-shadow:var(--shadow);
+}
+
+.supplier-name{
+font-size:22px;
+font-weight:800;
+}
+
+.supplier-mobile{
+font-size:13px;
+color:#cbd5f5;
+}
+
+/* SUMMARY */
+
+.summary-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+margin-bottom:25px;
+}
+
+.summary-card{
+background:white;
+border-radius:14px;
+padding:18px;
+box-shadow:var(--shadow);
+}
+
+.summary-title{
+font-size:12px;
+text-transform:uppercase;
+color:var(--muted);
+font-weight:700;
+}
+
+.summary-value{
+font-size:22px;
+font-weight:800;
+margin-top:6px;
+}
+
+.summary-total{color:var(--danger)}
+.summary-paid{color:var(--success)}
+.summary-balance{color:var(--warning)}
+
+/* TABLE CARD */
+
+.table-card{
+background:white;
+border-radius:16px;
+padding:20px;
+box-shadow:var(--shadow);
+}
+
+/* TABLE */
+
+.table{
+width:100%;
+border-collapse:separate;
+border-spacing:0 8px;
+}
+
+.table thead th{
+font-size:11px;
+text-transform:uppercase;
+font-weight:800;
+color:var(--muted);
+border:none;
+padding:10px;
+}
+
+.table tbody tr td{
+background:#fbfcfd;
+padding:14px;
+border-top:1px solid var(--border);
+border-bottom:1px solid var(--border);
+}
+
+.amount{color:var(--danger);font-weight:700;}
+.paid{color:var(--success);font-weight:700;}
+.balance{color:var(--warning);font-weight:800;}
+
+.empty{
+text-align:center;
+padding:40px;
+opacity:.5;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.summary-grid{
+grid-template-columns:1fr;
+}
+
+.table thead{
+display:none;
+}
+
+.table tbody tr{
+display:block;
+margin-bottom:12px;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.table tbody tr td{
+display:flex;
+justify-content:space-between;
+border:none;
+border-bottom:1px solid var(--border);
+}
+
+.table tbody tr td::before{
+content:attr(data-label);
+font-weight:700;
+color:var(--muted);
+}
+
+}
+
+</style>
+
+<div class="main-content">
+
+<!-- SUPPLIER HEADER -->
+
+<div class="supplier-header">
+
+<div>
+<div class="supplier-name">
+{{ supplier.name }}
+</div>
+
+<div class="supplier-mobile">
+Mobile: {{ supplier.mobile or "-" }}
+</div>
+</div>
+
+<div>
+<i class="fas fa-book fa-2x"></i>
+</div>
+
+</div>
+
+
+<!-- SUMMARY -->
+
+<div class="summary-grid">
+
+<div class="summary-card">
+<div class="summary-title">Total Purchase</div>
+<div class="summary-value summary-total">
+{{ "{:,.2f}".format(total_purchase or 0) }}
+</div>
+</div>
+
+<div class="summary-card">
+<div class="summary-title">Total Paid</div>
+<div class="summary-value summary-paid">
+{{ "{:,.2f}".format(total_paid or 0) }}
+</div>
+</div>
+
+<div class="summary-card">
+<div class="summary-title">Balance</div>
+<div class="summary-value summary-balance">
+{{ "{:,.2f}".format(balance or 0) }}
+</div>
+</div>
+
+</div>
+
+
+<!-- LEDGER TABLE -->
+
+<div class="table-card">
+
+<table class="table">
+
+<thead>
+<tr>
+<th>Bill</th>
+<th>Date</th>
+<th>Item</th>
+<th>Qty</th>
+<th>Rate</th>
+<th>Total</th>
+<th>Paid</th>
+<th>Balance</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% if rows %}
+
+{% for r in rows %}
+
+<tr>
+
+<td data-label="Bill">#{{ r.bill_no }}</td>
+
+<td data-label="Date">
+{{ r.date.strftime("%d %b %Y") if r.date else "-" }}
+</td>
+
+<td data-label="Item">
+{{ r.product_name or "-" }}
+</td>
+
+<td data-label="Qty">
+{{ r.quantity or 0 }}
+</td>
+
+<td data-label="Rate">
+{{ "%.2f"|format(r.rate or 0) }}
+</td>
+
+<td data-label="Total" class="amount">
+{{ "%.2f"|format(r.amount or 0) }}
+</td>
+
+<td data-label="Paid" class="paid">
+{{ "%.2f"|format(r.paid_amount or 0) }}
+</td>
+
+<td data-label="Balance" class="balance">
+{{ "%.2f"|format(r.balance_amount or 0) }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+{% else %}
+
+<tr>
+<td colspan="8">
+
+<div class="empty">
+
+<i class="fas fa-folder-open fa-3x"></i>
+<br>
+No Ledger Records Found
+
+</div>
+
+</td>
+</tr>
+
+{% endif %}
+
+</tbody>
+
+</table>
+<div style="display:flex;justify-content:center;margin-top:25px;gap:10px;flex-wrap:wrap">
+
+{% if page > 1 %}
+<a class="btn-main btn-ledger"
+href="/supplier-ledger/{{supplier_id}}?page={{page-1}}">
+Previous
+</a>
+{% endif %}
+
+<span style="padding:8px 12px;font-weight:700">
+Page {{page}}
+</span>
+
+{% if total_rows > page*50 %}
+<a class="btn-main btn-ledger"
+href="/supplier-ledger/{{supplier_id}}?page={{page+1}}">
+Next
+</a>
+{% endif %}
+
+</div>
+</div>
+
+</div>

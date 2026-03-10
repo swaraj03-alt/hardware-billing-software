@@ -1,0 +1,274 @@
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- ===== SR STEEL ERP SIDEBAR (UNIVERSAL FIXED) ===== -->
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+
+    <!-- HEADER -->
+    <div class="sidebar-header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-industry"></i></div>
+            <div class="logo-text">SR STEEL <span>ERP</span></div>
+        </div>
+        <button class="collapse-btn" onclick="toggleSidebar()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    </div>
+
+    <!-- MENU -->
+    <div class="menu-container">
+
+        <div class="menu-title">Control Center</div>
+        <a href="/dashboard" class="nav-link {{ 'active' if is_active('/dashboard') else '' }}">
+            <i class="fas fa-chart-line"></i><span>Dashboard Home</span>
+        </a>
+
+        <div class="menu-title">Sales & Billing</div>
+        <a href="/billing" class="nav-link {{ 'active' if is_active('/billing') else '' }}">
+            <i class="fas fa-file-invoice-dollar"></i><span>New Sale Bill</span>
+        </a>
+
+        <a href="/estimate" class="nav-link {{ 'active' if is_active('/estimate') else '' }}">
+            <i class="fas fa-file-signature"></i><span>Estimate (Kachha)</span>
+        </a>
+
+        <a href="{{ url_for('receipts') }}" class="nav-link {{ 'active' if is_active('/receipts') else '' }}">
+            <i class="fas fa-receipt"></i><span>Payment Receipts</span>
+        </a>
+
+        <!-- ✅ ADDED CREDIT LEDGER -->
+        <a href="/credit-ledger" class="nav-link {{ 'active' if is_active('/credit-ledger') else '' }}">
+            <i class="fas fa-book"></i><span>Credit (Udhari)</span>
+        </a>
+
+        <a href="/pending-bills" class="nav-link danger-link {{ 'active' if is_active('/pending-bills') else '' }}">
+            <i class="fas fa-clock-rotate-left"></i><span>Pending Bills</span>
+        </a>
+
+        <div class="menu-title">Inventory & Rates</div>
+        <a href="/inventory" class="nav-link {{ 'active' if is_active('/inventory') else '' }}">
+            <i class="fas fa-boxes-stacked"></i><span>Stock Management</span>
+        </a>
+
+        <a href="/rate-update" class="nav-link highlight-link {{ 'active' if is_active('/rate-update') else '' }}">
+            <i class="fas fa-tags"></i><span>Daily Rate Update</span>
+        </a>
+
+        <div class="menu-title">Logistics</div>
+        <a href="/hamal-account" class="nav-link {{ 'active' if is_active('/hamal-account') else '' }}">
+            <i class="fas fa-truck-pickup"></i><span>Hamali / Bhada</span>
+        </a>
+
+            <a href="/customers" class="nav-link {{ 'active' if is_active('/customers') else '' }}">
+        <i class="fas fa-users"></i><span>All Customers</span>
+    </a>
+
+        <a href="/advance-booking" class="nav-link {{ 'active' if is_active('/advance-booking') else '' }}">
+            <i class="fas fa-calendar-check"></i><span>Advance Booking</span>
+        </a>
+
+        <div class="menu-title">Accounts & GST</div>
+
+        <a href="/gst-report" class="nav-link {{ 'active' if is_active('/gst-report') else '' }}">
+            <i class="fas fa-file-contract"></i><span>GST Reports</span>
+        </a>
+
+        <a href="/suppliers" class="nav-link {{ 'active' if is_active('/suppliers') else '' }}">
+            <i class="fas fa-industry"></i><span>Supplier Khata</span>
+        </a>
+
+        <a href="/staff-salary" class="nav-link {{ 'active' if is_active('/staff-salary') else '' }}">
+            <i class="fas fa-user-tie"></i><span>Staff Salary</span>
+        </a>
+
+        <div class="menu-title">Owner Reports</div>
+        <a href="/daily-report" class="nav-link {{ 'active' if is_active('/daily-report') else '' }}">
+            <i class="fas fa-chart-pie"></i><span>Daily Report</span>
+        </a>
+
+        <a href="/upi-report" class="nav-link {{ 'active' if is_active('/upi-report') else '' }}">
+            <i class="fas fa-mobile-screen-button"></i><span>UPI Tracking</span>
+        </a>
+
+        <a href="/cash-tally" class="nav-link {{ 'active' if is_active('/cash-tally') else '' }}">
+            <i class="fas fa-cash-register"></i><span>Cash Tally</span>
+        </a>
+
+
+        <div class="menu-title">System</div>
+        <a href="/users" class="nav-link {{ 'active' if is_active('/users') else '' }}">
+            <i class="fas fa-users-gear"></i><span>User Management</span>
+        </a>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="sidebar-footer">
+        <a href="/logout" class="nav-link logout">
+            <i class="fas fa-right-from-bracket"></i><span>Logout</span>
+        </a>
+    </div>
+
+</div>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<style>
+:root{
+    --sidebar-width:230px;
+}
+
+/* ===== FIXED SIDEBAR ===== */
+.sidebar{
+    width:var(--sidebar-width);
+    height:100vh;
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    background:linear-gradient(180deg,#0f172a,#0b1220);
+    color:#f8fafc;
+    display:flex;
+    flex-direction:column;
+    z-index:2000;
+    box-shadow:6px 0 18px rgba(0,0,0,.18);
+    transition:width .25s ease;
+}
+
+/* HEADER */
+.sidebar-header{
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    padding:8px;
+    border-radius:9px;
+}
+.logo-text{font-weight:800;font-size:16px}
+.logo-text span{color:#60a5fa;font-weight:500}
+
+/* MENU */
+.menu-container{
+    flex:1;
+    overflow-y:auto;
+    padding:8px 6px 12px;
+}
+
+/* TITLES */
+.menu-title{
+    font-size:10px;
+    text-transform:uppercase;
+    color:#64748b;
+    margin:16px 0 6px 14px;
+    letter-spacing:1px;
+    font-weight:700;
+}
+
+/* NAV */
+.nav-link{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 14px;
+    margin:3px 8px;
+    border-radius:10px;
+    color:#cbd5e1;
+    text-decoration:none;
+    font-size:13.5px;
+    transition:.18s;
+}
+
+.nav-link:hover{
+    background:rgba(255,255,255,.06);
+    color:white;
+}
+
+.nav-link.active{
+    background:linear-gradient(90deg,#2563eb,#3b82f6);
+    color:white;
+    box-shadow:0 4px 14px rgba(37,99,235,.35);
+}
+
+.nav-link i{
+    width:18px;
+    text-align:center;
+}
+
+.danger-link{color:#f87171}
+.highlight-link{border-left:3px solid #fbbf24}
+
+/* FOOTER */
+.sidebar-footer{
+    padding:14px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.logout{
+    background:rgba(239,68,68,.12);
+    color:#f87171;
+    justify-content:center;
+}
+
+/* COLLAPSED */
+.sidebar.collapsed{width:68px;}
+.sidebar.collapsed .menu-title,
+.sidebar.collapsed span,
+.sidebar.collapsed .logo-text{display:none;}
+.sidebar.collapsed .nav-link{justify-content:center;}
+
+/* MOBILE */
+.mobile-toggle{
+    display:none;
+    position:fixed;
+    top:14px;
+    left:14px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    width:42px;
+    height:42px;
+    border-radius:10px;
+    z-index:2100;
+}
+
+.sidebar-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    z-index:1999;
+}
+
+@media(max-width:1024px){
+    .sidebar{left:calc(-1 * var(--sidebar-width));}
+    .sidebar.active{left:0;}
+    .mobile-toggle{display:block;}
+    .sidebar-overlay.active{display:block;}
+}
+
+</style>
+
+<script>
+function toggleSidebar(){
+    const sb=document.getElementById("sidebar");
+    const overlay=document.getElementById("sidebarOverlay");
+
+    if(window.innerWidth<=1024){
+        sb.classList.toggle("active");
+        overlay.classList.toggle("active");
+    }else{
+        sb.classList.toggle("collapsed");
+    }
+}
+</script>

@@ -1,0 +1,390 @@
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="main-wrapper">
+    {% include 'sidebar.html' %}
+
+    <main class="content-area">
+        <div class="container-fluid">
+
+<!-- ================= HEADER ================= -->
+<header class="report-header">
+
+    <div class="title-block">
+        <div class="icon-box">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+
+        <div>
+            <h1>Daily Tally Report</h1>
+            <p>Financial summary for
+                <span class="badge-date">{{ period_label }}</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="header-actions">
+
+        <!-- DATE RANGE -->
+        <form method="get" class="date-filter">
+            <input type="date" name="from"
+                   value="{{ request.args.get('from','') }}">
+            <span>to</span>
+            <input type="date" name="to"
+                   value="{{ request.args.get('to','') }}">
+
+            <button class="btn btn-primary">
+                <i class="fas fa-filter"></i>
+                Apply
+            </button>
+        </form>
+
+        <!-- PRINT -->
+        <button onclick="window.print()" class="btn btn-dark">
+            <i class="fas fa-print"></i>
+            Print
+        </button>
+
+    </div>
+
+</header>
+
+<!-- ================= KPI ================= -->
+<div class="kpi-grid">
+
+    <div class="kpi-card border-blue">
+        <div class="kpi-icon bg-blue">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div>
+            <span class="kpi-label">Total Sale</span>
+            <span class="kpi-value">₹{{ (sales | sum(attribute='total_bill')) or 0 }}</span>
+        </div>
+    </div>
+
+    <div class="kpi-card border-red">
+        <div class="kpi-icon bg-red">
+            <i class="fas fa-external-link-alt"></i>
+        </div>
+        <div>
+            <span class="kpi-label">Total Jawak</span>
+            <span class="kpi-value text-red">₹{{ expenses }}</span>
+        </div>
+    </div>
+
+    <div class="kpi-card border-green">
+        <div class="kpi-icon bg-green">
+            <i class="fas fa-cash-register"></i>
+        </div>
+        <div>
+            <span class="kpi-label">Cash in Galla</span>
+            <span class="kpi-value text-green">₹{{ galla }}</span>
+        </div>
+    </div>
+<div class="kpi-card border-green">
+    <div class="kpi-icon bg-green">
+        <i class="fas fa-chart-line"></i>
+    </div>
+    <div>
+        <span class="kpi-label">Profit</span>
+        <span class="kpi-value text-green">₹{{ profit }}</span>
+    </div>
+</div>
+
+</div>
+
+<!-- ================= PAYMENT SUMMARY ================= -->
+<div class="summary-card">
+
+    <div class="summary-header">
+        <h3><i class="fas fa-wallet"></i> Payment Mode Summary</h3>
+    </div>
+
+    <div class="summary-body">
+
+       {% for s in sales %}
+
+{% if s.payment_mode|lower == 'upi' %}
+<a class="mode-row"
+   href="/upi-report?from={{ request.args.get('from','') }}&to={{ request.args.get('to','') }}">
+{% else %}
+<a class="mode-row"
+   href="/payment-history?mode={{ s.payment_mode }}&from={{ request.args.get('from','') }}&to={{ request.args.get('to','') }}">
+{% endif %}
+    <div class="mode-info">
+        <span class="dot {{ s.payment_mode|lower }}"></span>
+        <span>{{ s.payment_mode }}</span>
+    </div>
+
+    <span class="amount">₹{{ s.total_received }}</span>
+</a>
+
+{% endfor %}
+
+        <div class="divider"></div>
+
+        <div class="mode-row total">
+            <span>Net Cash Received</span>
+           <span class="amount green">₹{{ net_cash }}</span>
+        </div>
+
+        <p class="note">
+            * Total cash received before deducting expenses
+        </p>
+
+    </div>
+
+</div>
+
+</div>
+</main>
+</div>
+
+<style>
+:root{
+    --blue:#3b82f6;
+    --red:#ef4444;
+    --green:#10b981;
+    --bg:#f8fafc;
+    --text:#1e293b;
+    --muted:#64748b;
+}
+
+/* ===== BASE ===== */
+body{
+    margin:0;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg);
+}
+
+.main-wrapper{
+    display:flex;
+}
+
+.content-area{
+    flex:1;
+    margin-left:280px;
+    padding:28px;
+}
+
+/* ===== HEADER ===== */
+.report-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:28px;
+}
+
+.title-block{
+    display:flex;
+    gap:14px;
+    align-items:center;
+}
+
+.icon-box{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    background:#f59e0b;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+}
+
+.title-block h1{
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+    color:var(--text);
+}
+
+.badge-date{
+    background:#e2e8f0;
+    padding:3px 10px;
+    border-radius:6px;
+    font-weight:700;
+}
+
+.header-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.date-filter{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    padding:6px 8px;
+    border-radius:8px;
+}
+
+.date-filter input{
+    border:none;
+    font-weight:600;
+}
+
+.btn{
+    border:none;
+    border-radius:8px;
+    padding:8px 14px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-dark{background:#1e293b;color:#fff;}
+
+/* ===== KPI ===== */
+.kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px;
+    margin-bottom:26px;
+}
+
+.kpi-card{
+    background:#fff;
+    border-radius:16px;
+    padding:18px;
+    display:flex;
+    gap:14px;
+    align-items:center;
+    border-bottom:4px solid transparent;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+
+.border-blue{border-color:var(--blue);}
+.border-red{border-color:var(--red);}
+.border-green{border-color:var(--green);}
+
+.kpi-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+}
+
+.bg-blue{background:var(--blue);}
+.bg-red{background:var(--red);}
+.bg-green{background:var(--green);}
+
+.kpi-label{
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:700;
+}
+
+.kpi-value{
+    font-size:22px;
+    font-weight:800;
+}
+
+.text-red{color:var(--red);}
+.text-green{color:var(--green);}
+
+/* ===== SUMMARY ===== */
+.summary-card{
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+
+.summary-header{
+    padding:18px 22px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.summary-body{
+    padding:18px 22px;
+}
+
+.mode-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    text-decoration:none;
+    color:inherit;
+    border-radius:6px;
+}
+
+.mode-row:hover{
+    background:#f1f5f9;
+}
+
+.mode-info{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:600;
+}
+
+.dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+}
+
+.dot.cash{background:var(--green);}
+.dot.upi{background:var(--blue);}
+
+.amount{
+    font-weight:800;
+}
+
+.green{color:var(--green);}
+
+.divider{
+    border-top:2px dashed #e2e8f0;
+    margin:14px 0;
+}
+
+.note{
+    font-size:11px;
+    color:var(--muted);
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1024px){
+    .content-area{
+        margin-left:0;
+        padding:20px;
+    }
+}
+
+@media(max-width:700px){
+    .report-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .header-actions{
+        width:100%;
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .btn{
+        width:100%;
+        justify-content:center;
+    }
+}
+
+@media print{
+    .sidebar,.header-actions{display:none!important;}
+    .content-area{margin-left:0;padding:0;}
+}
+</style>

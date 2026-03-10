@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory | SR Steel ERP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ===== YOUR ORIGINAL CSS (UNCHANGED) ===== */
+:root{
+    --primary:#2563eb;
+    --success:#10b981;
+    --danger:#ef4444;
+    --dark:#0f172a;
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --border:#e2e8f0;
+    --sidebar-w:260px;
+}
+
+.modal-content{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+}
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:14px;
+width:600px;
+max-width:95%;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+gap:10px;
+}
+
+@media(max-width:600px){
+.modal-content{
+grid-template-columns:1fr;
+width:95%;
+}
+}
+
+thead th{
+    position:sticky;
+    top:0;
+    background:white;
+    z-index:5;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+.main{
+    margin-left:var(--sidebar-w);
+    padding:28px;
+    transition:.3s;
+}
+
+@media(max-width:1024px){
+    .main{
+        margin-left:0;
+        margin-top:70px;
+        padding:20px;
+    }
+}
+
+.inventory-card{
+    background:var(--card);
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,.05);
+    padding:22px;
+}
+
+.header-flex{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.header-flex h2{
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+    color:var(--dark);
+}
+
+.sub{
+    color:#64748b;
+    font-size:13px;
+}
+
+.toolbar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+}
+
+.search input{
+    width:240px;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+}
+
+.filter{
+    padding:9px;
+    border:1px solid var(--border);
+    border-radius:8px;
+}
+
+.btn{
+    padding:8px 14px;
+    border-radius:8px;
+    border:none;
+    font-weight:700;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+
+.btn-primary{background:var(--primary);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-edit{background:#f1f5f9}
+
+.add-form{
+    display:none;
+    margin-bottom:18px;
+    background:#f8fafc;
+    padding:14px;
+    border-radius:12px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;
+}
+
+.add-form input,.add-form select{
+    padding:8px;
+    border:1px solid var(--border);
+    border-radius:6px;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 8px;
+    min-width:900px;
+}
+
+th{
+    background:#f8fafc;
+    padding:12px;
+    text-align:left;
+    font-size:11px;
+    color:#64748b;
+    text-transform:uppercase;
+}
+
+td{
+    background:#fff;
+    padding:12px;
+    border-top:1px solid #f1f5f9;
+    border-bottom:1px solid #f1f5f9;
+}
+
+td:first-child{border-left:1px solid #f1f5f9;border-radius:10px 0 0 10px}
+td:last-child{border-right:1px solid #f1f5f9;border-radius:0 10px 10px 0}
+
+.low td{
+    background:#fef2f2 !important;
+}
+
+.sell{
+    color:var(--primary);
+    font-weight:800;
+}
+
+.badge-unit{
+    background:#e0f2fe;
+    color:#0369a1;
+    padding:3px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.status-ok{color:var(--success);font-weight:700}
+.status-low{color:var(--danger);font-weight:700}
+
+#productResults div:hover{
+background:#f1f5f9;
+}
+</style>
+</head>
+
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="main">
+<div class="inventory-card">
+
+<div class="header-flex">
+<div>
+<h2><i class="fas fa-warehouse"></i> Inventory</h2>
+<div class="sub">Stock & Pricing Management</div>
+</div>
+
+<button class="btn btn-primary" onclick="openAddModal()">
+<i class="fas fa-plus"></i> Add Product
+</button>
+
+</div>
+
+<div class="toolbar">
+<div class="search">
+<input type="text" id="searchInput" placeholder="Search product...">
+</div>
+
+<select id="unitFilter" class="filter">
+<option value="">All Units</option>
+<option>Kg</option>
+<option>Pcs</option>
+<option>Bag</option>
+<option>Ton</option>
+<option>Box</option>
+<option>Feet</option>
+<option>Meter</option>
+<option>Roll</option>
+<option>Sheet</option>
+<option>Litre</option>
+<option>Set</option>
+</select>
+   <select id="stockFilter" class="filter">
+<option value="">All Stock</option>
+<option value="REGULAR">Regular Stock</option>
+<option value="GST">GST Stock</option>
+</select>
+
+</div>
+
+{% if role=='owner' %}
+<div id="addModal" class="modal">
+
+<form action="/inventory" method="POST" id="addForm" class="add-form modal-content">
+<div style="position:relative; grid-column:span 2;">
+<input type="hidden" name="products_json" id="productsJson">
+<input
+    name="product_name"
+    id="productSearch"
+    placeholder="Product Name"
+    autocomplete="off"
+    style="width:90%;"
+    required>
+
+<div id="productResults" style="
+position:absolute;
+top:100%;
+left:0;
+width:100%;
+max-width:100%;
+background:#fff;
+border:1px solid #e2e8f0;
+border-radius:8px;
+box-shadow:0 8px 20px rgba(0,0,0,.1);
+max-height:220px;
+overflow-y:auto;
+display:none;
+z-index:9999;
+"></div>
+
+</div>
+    <select name="unit">
+<option value="Kg">Kg</option>
+<option value="Pcs">Pcs</option>
+<option value="Bag">Bag</option>
+<option value="Ton">Ton</option>
+<option value="Box">Box</option>
+<option value="Feet">Feet</option>
+<option value="Meter">Meter</option>
+<option value="Roll">Roll</option>
+<option value="Sheet">Sheet</option>
+</select>
+
+<input name="purchase_price" type="number" step="0.01" placeholder="Purchase Price">
+
+<input name="selling_price" type="number" step="0.01" placeholder="Selling Price">
+
+<select name="stock_type" id="stockType">
+<option value="REGULAR">Regular Stock</option>
+<option value="GST">GST Stock</option>
+</select>
+
+<select name="gst_rate" id="gstRateField" style="display:none">
+<option value="">GST %</option>
+<option value="5">5%</option>
+<option value="12">12%</option>
+<option value="18">18%</option>
+<option value="28">28%</option>
+</select>
+
+<div style="position:relative;">
+<input
+type="text"
+id="supplierInput"
+name="supplier_name"
+placeholder="Type Supplier Name"
+autocomplete="off"
+style="width:90%;padding:8px;border:1px solid #e2e8f0;border-radius:6px">
+
+<input type="hidden" name="supplier_id" id="supplierId">
+
+<div id="supplierResults" style="
+position:absolute;
+top:100%;
+left:0;
+width:100%;
+background:#fff;
+border:1px solid #e2e8f0;
+border-radius:8px;
+box-shadow:0 10px 25px rgba(0,0,0,.1);
+display:none;
+max-height:200px;
+overflow:auto;
+z-index:9999;
+"></div>
+</div>
+
+<input name="stock" type="number" placeholder="Stock">
+<input name="min_stock" type="number" placeholder="Min Stock">
+<!-- ADD PRODUCT TEMP LIST -->
+<div id="tempItems" style="grid-column:span 2;margin-top:10px;"></div>
+
+<button type="button" class="btn btn-primary" onclick="addTempProduct()">
+<i class="fas fa-plus"></i> Add Item
+</button>
+<button type="button" class="btn btn-primary" onclick="openSupplierPayment()">
+Save
+</button>
+</form>
+    </div>
+{% endif %}
+
+<div id="supplierPayModal" class="modal">
+
+<div class="modal-content">
+
+<h3 style="grid-column:span 2;">Supplier Payment</h3>
+
+<input type="hidden" id="paySupplierId">
+
+<div style="grid-column:span 2;">
+<label>Supplier</label>
+<input id="paySupplierName" readonly>
+</div>
+
+<div>
+<label>Total Purchase</label>
+<input id="totalPurchase" readonly>
+</div>
+
+<div>
+<label>Already Paid</label>
+<input id="totalPaid" readonly>
+</div>
+
+<div>
+<label>Balance</label>
+<input id="balanceAmount" readonly>
+</div>
+
+<div style="grid-column:span 2;">
+<label>Pay Amount</label>
+<input id="payAmount" type="number" style="width:100%;">
+</div>
+
+<div>
+<label>Payment Mode</label>
+<select id="payMethod" onchange="handlePaymentMode()">
+<option value="Cash">Cash</option>
+<option value="UPI">UPI</option>
+<option value="Credit">Credit</option>
+</select>
+</div>
+
+<div style="grid-column:span 2; display:flex; gap:10px; margin-top:10px;">
+<button type="button" onclick="saveSupplierPayment()" class="btn btn-primary">
+Save Payment
+</button>
+
+<button type="button" onclick="closePayModal()" class="btn btn-danger">
+Cancel
+</button>
+</div>
+
+</div>
+</div>
+<div class="table-wrap">
+<table id="invTable">
+
+<thead>
+<tr>
+<th>Product</th>
+<th>Unit</th>
+<th>Selling</th>
+<th>Purchase</th>
+<th>Profit</th>
+<th>Stock</th>
+<th>Type</th>
+<th>Supplier</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for item in items %}
+<tr data-name="{{item.product_name}}" data-unit="{{item.unit}}"
+    data-type="{{item.stock_type}}" class="{% if (item.stock_quantity or 0) <= (item.min_stock_level or 0) %}low{% endif %}">
+
+<td><b>{{item.product_name}}</b></td>
+
+<td>
+<span class="badge-unit">{{item.unit}}</span>
+</td>
+
+<td class="sell">
+₹{{"%.2f"|format(item.selling_price or 0)}}
+</td>
+
+<td>
+₹{{"%.2f"|format(item.purchase_price or 0)}}
+</td>
+
+<td>
+₹{{"%.2f"|format((item.selling_price or 0)-(item.purchase_price or 0))}}
+</td>
+
+<td>
+<b>{{item.stock_quantity or 0}}</b> {{item.unit}}
+</td>
+
+<td>{{item.stock_type}}</td>
+
+<td>{{item.supplier_name or "-"}}</td>
+
+<td>
+{% if (item.stock_quantity or 0) <= (item.min_stock_level or 0) %}
+<span class="status-low">LOW</span>
+{% else %}
+<span class="status-ok">OK</span>
+{% endif %}
+</td>
+
+<td>
+{% if role=='owner' %}
+<button class="btn btn-edit" onclick="toggleEdit({{item.id}})">
+<i class="fas fa-pen"></i>
+</button>
+
+<a href="/delete-product/{{item.id}}" class="btn btn-danger"
+onclick="return confirm('Delete product?')">
+<i class="fas fa-trash"></i>
+</a>
+{% endif %}
+</td>
+</tr>
+
+<tr id="edit-{{item.id}}" style="display:none;background:#f8fafc">
+<td colspan="10">
+
+<form method="POST" action="/update-rate/{{item.id}}" style="display:flex;gap:10px;flex-wrap:wrap">
+
+<input name="product_name"
+value="{{item.product_name}}"
+placeholder="Product Name"
+style="width:200px">
+
+<input name="purchase_price"
+value="{{item.purchase_price}}"
+type="number"
+step="0.01"
+placeholder="Purchase">
+
+<input name="selling_price"
+value="{{item.selling_price}}"
+type="number"
+step="0.01"
+placeholder="Selling">
+
+<input name="stock_quantity"
+value="{{item.stock_quantity}}"
+type="number"
+placeholder="Stock">
+
+<button class="btn btn-primary">Update</button>
+
+</form>
+
+</td>
+</tr>
+
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<script>
+
+function openAddModal(){
+document.getElementById("addModal").style.display="flex";
+}
+
+window.addEventListener("click",function(e){
+let modal=document.getElementById("addModal");
+if(e.target===modal){
+modal.style.display="none";
+}
+});
+
+
+function toggleEdit(id){
+let row=document.getElementById("edit-"+id);
+row.style.display = row.style.display==="none" ? "table-row" : "none";
+}
+
+document.getElementById("searchInput").addEventListener("input",function(){
+let q=this.value.toLowerCase();
+document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+if(!r.dataset.name) return;
+r.style.display=r.dataset.name.toLowerCase().includes(q)?"":"none";
+});
+});
+
+document.getElementById("unitFilter").addEventListener("change",function(){
+let u=this.value;
+document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+if(!r.dataset.unit) return;
+r.style.display=(u===""||r.dataset.unit===u)?"":"none";
+});
+});
+
+document.getElementById("stockType").addEventListener("change",function(){
+
+let gstField=document.getElementById("gstRateField");
+
+if(this.value==="GST"){
+gstField.style.display="block";
+}else{
+gstField.style.display="none";
+}
+
+});
+
+const input = document.getElementById("productSearch");
+const results = document.getElementById("productResults");
+
+if(input && results){
+
+input.addEventListener("keyup", function(){
+
+    let q = this.value.trim();
+
+    if(q.length < 2){
+        results.style.display = "none";
+        return;
+    }
+
+fetch(`/api/search-product?q=${encodeURIComponent(q)}`)
+    .then(res => res.json())
+    .then(data => {
+
+        results.innerHTML = "";
+
+        if(data.length === 0){
+            results.style.display = "none";
+            return;
+        }
+
+        data.forEach(p => {
+
+            let div = document.createElement("div");
+
+            div.style.padding = "8px 10px";
+            div.style.cursor = "pointer";
+            div.style.borderBottom = "1px solid #f1f5f9";
+
+            div.innerHTML = `
+                <b>${p.product_name}</b>
+                <span style="float:right;color:#64748b;font-size:12px">
+                ₹${p.selling_rate}
+                </span>
+            `;
+
+            div.onclick = function(){
+
+                input.value = p.product_name;
+                results.style.display = "none";
+
+            };
+
+            results.appendChild(div);
+
+        });
+
+        results.style.display = "block";
+
+    });
+
+});
+}
+function saveSupplierPayment(){
+
+alert("clicked");
+
+let supplierId = document.getElementById("paySupplierId").value;
+let amount = document.getElementById("payAmount").value;
+let method = document.getElementById("payMethod").value;
+
+document.addEventListener("click", function(e){
+
+    if(!input.contains(e.target)){
+        results.style.display = "none";
+    }
+
+});
+}
+ document.getElementById("stockFilter").addEventListener("change", function(){
+
+    let type = this.value;
+
+    document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+
+        if(!r.dataset.type) return;
+
+        if(type === "" || r.dataset.type === type){
+            r.style.display = "";
+        }else{
+            r.style.display = "none";
+        }
+
+    });
+
+});
+
+
+
+
+function closePayModal(){
+
+document.getElementById("supplierPayModal").style.display="none";
+
+document.getElementById("payAmount").value="";
+document.getElementById("paySupplierId").value="";
+
+}
+
+function saveSupplierPayment(){
+
+let supplierId = document.getElementById("paySupplierId").value;
+let amount = document.getElementById("payAmount").value;
+let method = document.getElementById("payMethod").value;
+
+if(method !== "Credit" && (!amount || amount <= 0)){
+alert("Enter payment amount");
+return;
+}
+
+fetch("/quick-pay-supplier",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+supplier_id:supplierId,
+supplier_name:document.getElementById("paySupplierName").value,
+amount:amount,
+method:method
+})
+})
+.then(res=>{
+if(!res.ok){
+throw new Error("Server error");
+}
+return res.json();
+})
+.then(data=>{
+if(data.success){
+closePayModal();
+document.getElementById("addForm").submit();
+}else{
+alert(data.error || "Payment failed");
+}
+})
+.catch(err=>{
+console.error(err);
+alert("Server error");
+});
+
+}  // <-- CLOSE FUNCTION HERE
+
+
+function openSupplierPayment(){
+
+let supplierId = document.getElementById("supplierId").value;
+let supplierName = document.getElementById("supplierInput").value;
+
+if(!supplierName){
+alert("Please enter supplier name");
+return;
+}
+
+let purchase = parseFloat(document.querySelector("input[name='purchase_price']").value) || 0;
+let qty = parseFloat(document.querySelector("input[name='stock']").value) || 0;
+
+let totalPurchase = purchase * qty;
+
+document.getElementById("paySupplierId").value = supplierId;
+document.getElementById("paySupplierName").value = supplierName;
+
+document.getElementById("totalPurchase").value = totalPurchase;
+document.getElementById("balanceAmount").value = totalPurchase;
+document.getElementById("payAmount").value = "";
+
+document.getElementById("supplierPayModal").style.display = "flex";
+
+}
+
+const supplierInput = document.getElementById("supplierInput");
+const supplierResults = document.getElementById("supplierResults");
+const supplierIdField = document.getElementById("supplierId");
+
+supplierInput.addEventListener("keyup", function(){
+
+let q = this.value.trim();
+
+if(q.length < 1){
+supplierResults.style.display = "none";
+return;
+}
+
+fetch(`/api/search-supplier?q=${encodeURIComponent(q)}`)
+.then(res=>res.json())
+.then(data=>{
+
+supplierResults.innerHTML = "";
+
+data.forEach(s => {
+
+let div = document.createElement("div");
+
+div.style.padding = "8px";
+div.style.cursor = "pointer";
+div.style.borderBottom = "1px solid #f1f5f9";
+
+div.innerHTML = `<b>${s.name}</b>`;
+
+div.onclick = function(){
+
+supplierInput.value = s.name;
+supplierIdField.value = s.id;
+
+supplierResults.style.display = "none";
+
+};
+
+supplierResults.appendChild(div);
+
+});
+
+supplierResults.style.display = "block";
+
+});
+
+});
+
+document.addEventListener("DOMContentLoaded", function(){
+
+// SAFETY CHECKS FOR ELEMENTS
+
+const searchInput = document.getElementById("searchInput");
+if(searchInput){
+searchInput.addEventListener("input",function(){
+let q=this.value.toLowerCase();
+document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+if(!r.dataset.name) return;
+r.style.display=r.dataset.name.toLowerCase().includes(q)?"":"none";
+});
+});
+}
+
+const unitFilter = document.getElementById("unitFilter");
+if(unitFilter){
+unitFilter.addEventListener("change",function(){
+let u=this.value;
+document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+if(!r.dataset.unit) return;
+r.style.display=(u===""||r.dataset.unit===u)?"":"none";
+});
+});
+}
+
+const stockFilter = document.getElementById("stockFilter");
+if(stockFilter){
+stockFilter.addEventListener("change", function(){
+let type = this.value;
+document.querySelectorAll("#invTable tbody tr").forEach(r=>{
+if(!r.dataset.type) return;
+if(type === "" || r.dataset.type === type){
+r.style.display = "";
+}else{
+r.style.display = "none";
+}
+});
+});
+}
+
+const stockType = document.getElementById("stockType");
+if(stockType){
+stockType.addEventListener("change",function(){
+let gstField=document.getElementById("gstRateField");
+if(this.value==="GST"){
+gstField.style.display="block";
+}else{
+gstField.style.display="none";
+}
+});
+}
+
+});
+
+function handlePaymentMode(){
+
+let mode = document.getElementById("payMethod").value;
+let payAmount = document.getElementById("payAmount");
+
+if(mode === "Credit"){
+    payAmount.value = 0;
+    payAmount.disabled = true;
+}else{
+    payAmount.disabled = false;
+}
+}
+
+// TEMP PRODUCT STORAGE
+let tempProducts = [];
+
+function addTempProduct(){
+
+let name = document.querySelector("input[name='product_name']").value;
+let unit = document.querySelector("select[name='unit']").value;
+let purchase = document.querySelector("input[name='purchase_price']").value;
+let selling = document.querySelector("input[name='selling_price']").value;
+let qty = document.querySelector("input[name='stock']").value;
+let supplier = document.querySelector("#supplierInput").value;
+let supplier_id = document.querySelector("#supplierId").value;
+
+if(!name || !qty){
+alert("Enter product and quantity");
+return;
+}
+
+tempProducts.push({
+name:name,
+unit:unit,
+purchase:purchase,
+selling:selling,
+qty:qty,
+supplier:supplier,
+supplier_id:supplier_id
+});
+
+renderTempProducts();
+
+document.querySelector("input[name='product_name']").value="";
+document.querySelector("input[name='purchase_price']").value="";
+document.querySelector("input[name='selling_price']").value="";
+document.querySelector("input[name='stock']").value="";
+
+}
+
+function renderTempProducts(){
+
+let box=document.getElementById("tempItems");
+box.innerHTML="";
+
+tempProducts.forEach((p,i)=>{
+
+box.innerHTML+=`
+<div style="padding:6px;border-bottom:1px solid #e5e7eb">
+<b>${p.name}</b> - ${p.qty} ${p.unit}
+<button onclick="removeTemp(${i})" style="float:right;background:red;color:white;border:none;border-radius:4px;padding:2px 6px;">x</button>
+</div>
+`;
+
+});
+
+}
+
+function removeTemp(i){
+tempProducts.splice(i,1);
+renderTempProducts();
+}
+</script>
+
+</body>
+</html>

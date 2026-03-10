@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay Supplier | SR Steel ERP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+
+:root{
+--primary:#2563eb;
+--success:#10b981;
+--danger:#ef4444;
+--dark:#0f172a;
+--sidebar-width:270px;
+}
+
+/* GLOBAL */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+body{
+background:#f1f5f9;
+color:var(--dark);
+}
+
+/* MAIN LAYOUT */
+
+.main-container{
+margin-left:var(--sidebar-width);
+padding:35px;
+transition:.3s;
+}
+
+/* HEADER */
+
+.page-header{
+background:white;
+padding:22px 26px;
+border-radius:18px;
+margin-bottom:25px;
+box-shadow:0 8px 25px rgba(0,0,0,.04);
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.page-header h2{
+font-weight:800;
+font-size:24px;
+}
+
+/* STATS GRID */
+
+.stats-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:18px;
+margin-bottom:25px;
+}
+
+.stat-card{
+background:white;
+padding:22px;
+border-radius:16px;
+box-shadow:0 6px 20px rgba(0,0,0,.03);
+}
+
+.stat-card label{
+font-size:12px;
+color:#64748b;
+font-weight:700;
+text-transform:uppercase;
+}
+
+.stat-card .value{
+font-size:24px;
+font-weight:800;
+margin-top:6px;
+}
+
+/* PAYMENT CARD */
+
+.payment-card{
+background:white;
+padding:35px;
+border-radius:20px;
+box-shadow:0 10px 40px rgba(0,0,0,.05);
+max-width:900px;
+margin:auto;
+}
+
+/* FORM GRID */
+
+.form-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:22px;
+}
+
+.full-width{
+grid-column:1 / -1;
+}
+
+.input-group{
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+
+.input-group label{
+font-size:13px;
+font-weight:700;
+color:#475569;
+}
+
+input,select,textarea{
+padding:13px 16px;
+border-radius:12px;
+border:1.5px solid #e2e8f0;
+font-size:14px;
+font-weight:600;
+background:#f8fafc;
+transition:.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+outline:none;
+border-color:var(--primary);
+background:white;
+box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+input[readonly]{
+background:#f1f5f9;
+}
+
+/* BUTTON */
+
+.btn-save{
+grid-column:1/-1;
+margin-top:10px;
+background:var(--primary);
+color:white;
+border:none;
+padding:16px;
+border-radius:14px;
+font-weight:800;
+font-size:15px;
+cursor:pointer;
+transition:.3s;
+}
+
+.btn-save:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 20px rgba(37,99,235,.25);
+}
+
+/* ========================= */
+/* TABLET RESPONSIVE */
+/* ========================= */
+
+@media (max-width:1024px){
+
+.main-container{
+margin-left:0;
+padding:25px;
+}
+
+.stats-grid{
+grid-template-columns:1fr 1fr;
+}
+
+}
+
+/* ========================= */
+/* MOBILE RESPONSIVE */
+/* ========================= */
+
+@media (max-width:768px){
+
+.main-container{
+padding:18px;
+}
+
+.page-header{
+flex-direction:column;
+text-align:center;
+}
+
+.page-header h2{
+font-size:20px;
+}
+
+.stats-grid{
+grid-template-columns:1fr;
+}
+
+.payment-card{
+padding:22px;
+}
+
+.form-grid{
+grid-template-columns:1fr;
+}
+
+.btn-save{
+padding:14px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="main-container">
+
+<header class="page-header">
+<i class="fas fa-hand-holding-usd" style="color:var(--primary);font-size:22px;"></i>
+<h2>Pay <span style="color:var(--primary)">Supplier</span></h2>
+</header>
+
+<!-- STATS -->
+
+<div class="stats-grid">
+
+<div class="stat-card">
+<label>Total Purchase</label>
+<div class="value">₹ {{ "{:,.2f}".format(total_purchase or 0) }}</div>
+</div>
+
+<div class="stat-card">
+<label>Total Paid</label>
+<div class="value" style="color:var(--success)">
+₹ {{ "{:,.2f}".format(total_paid or 0) }}
+</div>
+</div>
+
+<div class="stat-card">
+<label>Current Balance</label>
+<div class="value" style="color:var(--danger)">
+₹ {{ "{:,.2f}".format(balance or 0) }}
+</div>
+</div>
+
+</div>
+
+<!-- PAYMENT FORM -->
+
+<div class="payment-card">
+
+<form method="POST">
+
+<div class="form-grid">
+
+<div class="input-group full-width">
+<label>Supplier Name</label>
+<input type="text" value="{{ supplier.name }}" readonly>
+</div>
+
+<div class="input-group">
+<label>Amount to Pay (₹)</label>
+<input type="number" name="amount" max="{{ balance }}" placeholder="Enter Amount" required>
+</div>
+
+<div class="input-group">
+<label>Payment Method</label>
+<select name="payment_method">
+<option value="Cash">Cash (Nagadi)</option>
+<option value="UPI">UPI / PhonePe / GPay</option>
+<option value="Bank">Bank Transfer / NEFT</option>
+</select>
+</div>
+
+<div class="input-group">
+<label>Paid By</label>
+<select name="paid_by">
+<option value="Owner">Owner</option>
+<option value="Staff">Staff Member</option>
+</select>
+</div>
+
+<div class="input-group">
+<label>Staff Name</label>
+<input type="text" name="staff" placeholder="Enter Staff Name">
+</div>
+
+<div class="input-group full-width">
+<label>Notes / Remarks</label>
+<textarea name="notes" rows="3" placeholder="Additional details"></textarea>
+</div>
+
+<button type="submit" class="btn-save">
+<i class="fas fa-save"></i> Save Payment Entry
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+</body>
+</html>

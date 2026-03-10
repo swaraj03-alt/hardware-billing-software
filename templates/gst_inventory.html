@@ -1,0 +1,41 @@
+{% include 'sidebar.html' %}
+<div class="main">
+    <h2>GST Inventory</h2>
+
+    <form method="POST">
+        <input name="name" placeholder="Product Name" required>
+        <input name="hsn" placeholder="HSN Code">
+        <input name="unit" placeholder="Unit (Kg/Pcs)">
+        <input name="purchase_price" placeholder="Purchase Price">
+        <input name="selling_price" placeholder="Selling Price">
+        <input name="gst_rate" placeholder="GST %">
+        <input name="stock" placeholder="Opening Stock">
+        <button type="submit">Add GST Item</button>
+    </form>
+
+    <hr>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Name</th>
+            <th>HSN</th>
+            <th>Unit</th>
+            <th>Purchase</th>
+            <th>Sell</th>
+            <th>GST%</th>
+            <th>Stock</th>
+        </tr>
+
+        {% for i in items %}
+        <tr>
+            <td>{{ i.product_name }}</td>
+            <td>{{ i.hsn_code }}</td>
+            <td>{{ i.unit }}</td>
+            <td>{{ i.purchase_price }}</td>
+            <td>{{ i.selling_price }}</td>
+            <td>{{ i.gst_rate }}</td>
+            <td>{{ i.stock_quantity }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>

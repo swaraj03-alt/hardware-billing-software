@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SR Steel ERP | Rate Management</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --sidebar-width: 270px;
+            --bg: #f8fafc;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT */
+        .main-container {
+            margin-left: var(--sidebar-width);
+            padding: 25px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* HEADER (Unified with Dashboard) */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 18px 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #f1f5f9;
+        }
+
+        .header h2 {
+            letter-spacing: -1px;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .header small {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CONTENT GRID */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        /* DATA BOXES */
+        .data-box {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #f8fafc;
+        }
+
+        .data-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        /* FORM ELEMENTS */
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            margin-bottom: 10px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #f1f5f9;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            transition: 0.3s;
+            background: #fbfcfd;
+            color: var(--dark);
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: white;
+        }
+
+        /* PRICE DISPLAY (Matching Galla KPI) */
+        .price-box {
+            background: var(--dark);
+            color: white;
+            padding: 22px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border-bottom: 4px solid var(--primary);
+            display: none;
+        }
+
+        .price-box small {
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .old-price {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-top: 5px;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        /* STAFF TABLE (Unified with Dashboard) */
+        .staff-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .staff-table th {
+            padding: 12px 15px;
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: left;
+            font-weight: 800;
+        }
+
+        .staff-table td {
+            padding: 16px 15px;
+            background: #fbfcfd;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 700;
+        }
+
+        .staff-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
+        .staff-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
+
+        .avatar {
+            width: 38px; height: 38px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; color: white; font-size: 14px;
+        }
+
+        .staff-cell { display: flex; align-items: center; gap: 12px; }
+
+        .edit-badge {
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .edit-low { background: #ecfdf5; color: #059669; }
+        .edit-high { background: #fef2f2; color: #dc2626; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .main-container { margin-left: 0; padding: 15px; margin-top: 60px; }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'sidebar.html' %}
+
+    <div class="main-container">
+
+        <header class="header">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="/static/images/Logo.jpeg" alt="SR Steel" style="height:42px; width:auto; border-radius:6px;">
+                <div>
+                    <h2>SR STEEL <span style="color:var(--primary)">ERP</span></h2>
+                    <small><i class="fas fa-tags"></i> RATE MANAGEMENT</small>
+                </div>
+            </div>
+            <div style="text-align:right">
+                <strong style="font-size:.95rem; font-weight: 800;">{{ username }}</strong><br>
+                <span style="background:var(--primary-light); color:var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase;">{{ role }}</span>
+            </div>
+        </header>
+
+        <div class="content-grid">
+
+            <div class="data-box">
+                <h3><i class="fa fa-edit" style="color: var(--primary);"></i> Update Product Rate</h3>
+
+                <form method="POST" action="/update-rate">
+                    <div class="form-group">
+                        <label>SELECT PRODUCT</label>
+                        <select name="product_id" id="productSelect" required onchange="showCurrentPrice()">
+                            <option value="">-- Choose Item from Stock --</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}" data-price="{{ p.selling_price }}">
+                                {{ p.product_name }} (Stock: {{ p.stock_quantity }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="price-box" id="currentPriceBox">
+                        <small>CURRENT SELLING PRICE</small>
+                        <div class="old-price">₹ <span id="oldPriceVal">0.00</span></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>NEW SELLING PRICE (PER UNIT)</label>
+                        <div style="position: relative;">
+                            <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--primary);">₹</span>
+                            <input type="number" step="0.01" name="new_price" placeholder="0.00" style="padding-left: 35px;" required>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary">
+                        <i class="fa fa-save"></i> UPDATE RATE NOW
+                    </button>
+                </form>
+            </div>
+
+            {% if role == "owner" %}
+            <div class="data-box">
+                <h3><i class="fa fa-user-shield" style="color: var(--danger);"></i> Staff Rate Edit Log</h3>
+
+                <table class="staff-table">
+                    <thead>
+                        <tr>
+                            <th>STAFF</th>
+                            <th style="text-align: right;">CHANGES</th>
+                            <th style="text-align: right;">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in staff_stats %}
+                        <tr>
+                            <td class="staff-cell">
+                                <div class="avatar">{{ s.username[0]|upper }}</div>
+                                <div>
+                                    <div style="font-weight: 800;">{{ s.username }}</div>
+                                    <div style="font-size: 10px; color: #94a3b8;">Manual Edit</div>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="edit-badge {{ 'edit-high' if s.edits > 5 else 'edit-low' }}">
+                                    {{ s.edits }} Edits
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <span style="color:var(--success); font-weight: 800; font-size: 12px;">● Active</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+         {% if role == "owner" %}
+        <div class="data-box" style="margin-top:25px;">
+            <h3 style="font-size:1.1rem;margin-bottom:20px; font-weight: 800; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-pen-to-square" style="color:var(--warning);"></i> Recent Price Edits
+            </h3>
+
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Product</th>
+                        <th>Old Price</th>
+                        <th>New Price</th>
+                        <th>Time</th>
+<!--                        <th>Action</th>-->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in rate_edits %}
+                    <tr>
+                        <td>
+                            <strong>{{ e.user }}</strong>
+                        </td>
+                        <td>{{ e.product }}</td>
+                        <td style="color:var(--danger);font-weight:800;">
+                            ₹{{ e.old }}
+                        </td>
+                        <td style="color:var(--success);font-weight:800;">
+                            ₹{{ e.new }}
+                        </td>
+                        <td>{{ e.time }}</td>
+                        <tr>
+                        <td><strong>{{ e.user }}</strong></td>
+                        <td>{{ e.product }}</td>
+                        <td style="color:var(--danger);font-weight:800;">₹{{ e.old }}</td>
+                        <td style="color:var(--success);font-weight:800;">₹{{ e.new }}</td>
+                        <td>{{ e.time }}</td>
+
+                        <td style="display:flex; gap:6px;">
+
+<!--                        <form method="POST" action="/edit-rate-edit/{{ e.id }}">-->
+<!--                        <input type="number" name="new_price" step="0.01" value="{{ e.new }}" style="width:90px;padding:6px;">-->
+<!--&lt;!&ndash;                        <button style="background:#2563eb;color:white;border:none;padding:6px 10px;border-radius:6px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                        Edit&ndash;&gt;-->
+<!--&lt;!&ndash;                        </button>&ndash;&gt;-->
+<!--                        </form>-->
+
+<!--                            <a href="/delete-rate-edit/{{ e.id }}"-->
+<!--                           onclick="return confirm('Delete this edit?')"-->
+<!--                           style="background:#ef4444;color:white;padding:6px 10px;border-radius:6px;text-decoration:none;">-->
+<!--                        Delete-->
+<!--                        </a>-->
+
+                        </td>
+
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;color:#94a3b8;">
+                            No price edits found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        function showCurrentPrice(){
+            const select = document.getElementById("productSelect");
+            const box = document.getElementById("currentPriceBox");
+            const val = document.getElementById("oldPriceVal");
+            const opt = select.options[select.selectedIndex];
+            const price = opt.getAttribute("data-price");
+
+            if(price){
+                box.style.display = "block";
+                val.innerText = parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2});
+            } else {
+                box.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

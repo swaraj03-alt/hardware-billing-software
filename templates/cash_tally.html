@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Tally | SR Steel ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb; --success: #10b981; --danger: #ef4444;
+            --dark: #0f172a; --sidebar-width: 270px; --bg: #f1f5f9;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body{
+        background: var(--bg);
+        }
+/* ===== MOBILE SIDEBAR ===== */
+
+@media(max-width:992px){
+
+.sidebar{
+position:fixed;
+left:-270px;
+top:0;
+height:100%;
+width:270px;
+background:#0f172a;
+z-index:9999;
+transition:.3s;
+}
+
+.sidebar.active{
+left:0;
+}
+
+.main-container{
+margin-left:0;
+padding:18px;
+}
+
+}
+
+.main-container{
+margin-left:var(--sidebar-width);
+padding:25px;
+transition:0.3s;
+min-height:100vh;
+}
+        /* Header & Filters */
+        .header {
+            background: white; padding: 20px 25px; border-radius: 15px;
+            margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+.filter-bar{
+display:flex;
+gap:15px;
+background:white;
+padding:15px 25px;
+border-radius:12px;
+margin-bottom:25px;
+align-items:flex-end;
+flex-wrap:wrap;
+}
+
+@media(max-width:768px){
+
+.filter-bar{
+flex-direction:column;
+align-items:stretch;
+}
+
+.filter-bar .btn{
+width:100%;
+justify-content:center;
+}
+
+}
+@media(max-width:768px){
+
+table thead{
+display:none;
+}
+
+table tr{
+display:block;
+background:white;
+margin-bottom:12px;
+border-radius:10px;
+padding:12px;
+box-shadow:0 3px 8px rgba(0,0,0,.05);
+}
+
+table td{
+display:flex;
+justify-content:space-between;
+padding:6px 0;
+border:none;
+}
+
+table td::before{
+content:attr(data-label);
+font-weight:700;
+color:#64748b;
+font-size:11px;
+}
+
+}
+
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        input, select { padding: 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-weight: 600; outline: none; }
+
+        /* Action Buttons */
+        .action-btns { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn { border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; color: white; transition: 0.2s; }
+        .btn-blue { background: var(--primary); }
+        .btn-green { background: #25d366; } /* WhatsApp Green */
+        .btn-orange { background: #f59e0b; }
+        .btn-dark { background: var(--dark); }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-bottom: 4px solid var(--primary); }
+        .kpi-card.galla { background: var(--dark); color: white; border-bottom-color: var(--success); }
+        .kpi-card h4 { font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+        .kpi-card.galla h4 { color: #94a3b8; }
+        .kpi-card .value { font-size: 28px; font-weight: 800; display: block; }
+
+        .data-box { background: white; padding: 25px; border-radius: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 15px; color: #64748b; font-size: 12px; border-bottom: 2px solid #f1f5f9; }
+        td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
+
+        .badge { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .bg-green { background: #dcfce7; color: #166534; }
+        .bg-red { background: #fee2e2; color: #dc2626; }
+
+        /* --- PRINT STYLES --- */
+@media print {
+    /* Hide Sidebar, Header, Filter Bar, KPI Cards, and Action Buttons */
+    sidebar, .sidebar, .header, .filter-bar, .kpi-grid, .action-btns, .btn, footer {
+        display: none !important;
+    }
+
+    /* Reset margins for the main container */
+    .main-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Ensure the Data Box (Table) takes full width and has no shadows */
+    .data-box {
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .data-box h3 {
+        margin-bottom: 20px !important;
+        text-align: center;
+        font-size: 20px !important;
+    }
+
+    /* Style the table for clear printing */
+    table {
+        width: 100% !important;
+        border: 1px solid #000 !important;
+    }
+
+    th, td {
+        border-bottom: 1px solid #ddd !important;
+        color: black !important; /* Ensure text is black for printing */
+    }
+
+    /* Show a print-only title if you want */
+    .data-box::before {
+        content: "SR STEEL ERP - CASH TRANSACTION REPORT";
+        display: block;
+        text-align: center;
+        font-weight: 800;
+        font-size: 22px;
+        margin-bottom: 10px;
+    }
+}
+
+        @media (max-width: 992px) { .main-container { margin-left: 0; padding: 15px; } .filter-bar { flex-direction: column; align-items: stretch; } }
+    </style>
+</head>
+<body>
+
+    {% include 'sidebar.html' %}
+
+    <div class="main-container">
+        <header class="header">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="font-weight: 800;"><i class="fas fa-cash-register" style="color:var(--primary); margin-right:10px;"></i> Cash Galle Tally</h2>
+                    <small style="color: #64748b;">Financial History & Verification</small>
+                </div>
+                <div class="action-btns">
+                    <button onclick="exportToExcel()" class="btn btn-dark"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button onclick="window.print()" class="btn btn-blue"><i class="fas fa-file-pdf"></i> PDF</button>
+                    <button onclick="shareWhatsApp()" class="btn btn-green"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                    <button onclick="shareEmail()" class="btn btn-orange"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+            </div>
+        </header>
+
+        <form method="GET" class="filter-bar">
+            <div class="input-group">
+                <label>From Date</label>
+                <input type="date" name="from_date" value="{{ request.args.get('from_date', '') }}">
+            </div>
+            <div class="input-group">
+                <label>To Date</label>
+                <input type="date" name="to_date" value="{{ request.args.get('to_date', '') }}">
+            </div>
+            <div class="input-group">
+            <label>Actual Cash Count</label>
+            <input type="number" step="0.01" name="actual_cash" placeholder="Enter counted cash">
+            </div>
+            <button type="submit" class="btn btn-blue" style="height: 42px;"><i class="fas fa-search"></i> Filter Data</button>
+            <a href="/cash-tally" class="btn btn-dark" style="height: 42px; text-decoration: none; background:#64748b;">Reset</a>
+        </form>
+
+        <div class="kpi-grid">
+            {% if cash_difference is not none %}
+            <div class="kpi-card" style="border-bottom-color:{% if cash_difference < 0 %}var(--danger){% else %}var(--success){% endif %}; margin-bottom:20px;">
+            <h4>Cash Difference</h4>
+
+            <span class="value" style="color:{% if cash_difference < 0 %}var(--danger){% else %}var(--success){% endif %};">
+
+            {% if cash_difference < 0 %}
+            Shortage ₹{{ "{:,.2f}".format(cash_difference|abs) }}
+            {% elif cash_difference > 0 %}
+            Extra ₹{{ "{:,.2f}".format(cash_difference) }}
+            {% else %}
+            Perfect Match
+            {% endif %}
+
+            </span>
+
+            <small>Compared with system cash</small>
+            </div>
+            {% endif %}
+
+            <div class="kpi-card galla">
+                <h4>Net Cash Balance</h4>
+                <span class="value">₹{{ "{:,.2f}".format(cash_collection | default(0)) }}</span>
+                <small style="color:#94a3b8;">Total Cash in Hand</small>
+            </div>
+            <div class="kpi-card" style="border-bottom-color: var(--success);">
+                <h4>Collection (Selected Range)</h4>
+                <span class="value" style="color:var(--success)">+ ₹{{ "{:,.2f}".format(cash_today | default(0)) }}</span>
+                <small>Total Cash Income</small>
+            </div>
+            <div class="kpi-card" style="border-bottom-color: var(--danger);">
+                <h4>Expenses (Selected Range)</h4>
+                <span class="value" style="color:var(--danger)">- ₹{{ "{:,.2f}".format(today_expenses | default(0)) }}</span>
+                <small>Total Cash Jawak</small>
+            </div>
+        </div>
+
+        <div class="data-box">
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 10px;">
+                <i class="fas fa-history" style="margin-right:8px; color:var(--primary)"></i> Transaction Records
+            </h3>
+            <table id="cashTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description / Party Name</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in transactions %}
+                    <tr>
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>
+                            <span class="badge {% if item.type == 'INCOME' %}bg-green{% else %}bg-red{% endif %}">
+                                {{ item.type }}
+                            </span>
+                        </td>
+                        <td style="color: {% if item.type == 'INCOME' %}var(--success){% else %}var(--danger){% endif %}">
+                            {% if item.type == 'INCOME' %}+{% else %}-{% endif %} ₹{{ "{:,.2f}".format(item.amount) }}
+                        </td>
+                        <td><i class="fas fa-check-circle" style="color:var(--success)"></i> Verified</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 40px; color: #64748b;">No records found for this date range.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // WhatsApp Sharing Logic
+        function shareWhatsApp() {
+            let totalCash = document.querySelector('.kpi-card.galla .value').innerText;
+            let dateRange = "History Report";
+            let text = `*SR STEEL ERP - Cash Tally Report*%0A---------------------------%0A*Net Cash in Hand:* ${totalCash}%0A*Status:* Verified%0A%0ACheck dashboard for more details.`;
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        // Email Sharing Logic
+        function shareEmail() {
+            let totalCash = document.querySelector('.kpi-card.galla .value').innerText;
+            let subject = "SR Steel ERP - Cash Tally Report";
+            let body = `Net Cash Balance in Hand: ${totalCash}\n\nThis is a system generated tally report.`;
+            window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
+        }
+
+        // Export to Excel Logic
+        function exportToExcel() {
+            var table = document.getElementById("cashTable");
+            var wb = XLSX.utils.table_to_book(table, {sheet: "Cash Report"});
+            XLSX.writeFile(wb, "SR_Steel_Cash_Report.xlsx");
+        }
+    </script>
+</body>
+</html>

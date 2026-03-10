@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receive Payment | SR Steel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .payment-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        h2 { color: #0f172a; margin-bottom: 10px; }
+        .due-amount { font-size: 24px; color: #ef4444; font-weight: 800; margin-bottom: 20px; }
+        input[type="number"] { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .btn-pay { background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; }
+        .btn-pay:hover { background: #059669; }
+        .cancel-link { display: block; margin-top: 15px; color: #64748b; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+{% include 'sidebar.html' %}
+    <div class="payment-box">
+        <h2>Receive Payment</h2>
+        <p style="color: #64748b;">Customer: <strong>{{ customer_name }}</strong></p>
+
+        <div class="due-amount">Total Baki: ₹{{ "{:,.2f}".format(total_due) }}</div>
+
+        <form action="/receive-payment/{{ bill_id }}" method="POST">
+            <label style="text-align: left; display: block; font-weight: 600;">Amount Received (Jama):</label>
+            <input type="number" name="amount_paid" step="0.01" max="{{ total_due }}" placeholder="Enter amount..." required autofocus>
+
+            <button type="submit" class="btn-pay">CONFIRM PAYMENT</button>
+        </form>
+
+        <a href="/pending-bills" class="cancel-link">Go Back</a>
+    </div>
+</body>
+</html>

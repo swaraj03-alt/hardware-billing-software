@@ -1,0 +1,133 @@
+{% include 'sidebar.html' %}
+
+<style>
+    /* 1. Global Variables & Sidebar Fix */
+    :root {
+        --primary: #2563eb;
+        --dark: #0f172a;
+        --bg: #f8fafc;
+        --border: #e2e8f0;
+        --text-muted: #64748b;
+    }
+
+    body {
+        background-color: var(--bg);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* 2. Positioning Fix: Shift content 260px from the left */
+    .main-content {
+        margin-left: 260px;
+        padding: 40px;
+        transition: all 0.3s ease;
+        min-height: 100vh;
+    }
+
+    /* 3. Responsive Logic for Tablet/Mobile */
+    @media (max-width: 1024px) {
+        .main-content {
+            margin-left: 0;
+            padding: 20px;
+        }
+    }
+
+    /* 4. Styled System Cards */
+    .settings-header {
+        margin-bottom: 2rem;
+    }
+
+    .glass-card {
+        background: #ffffff;
+        border-radius: 1.25rem;
+        border: 1px solid var(--border);
+        padding: 2.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-box {
+        background: #f1f5f9;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        border: 1px solid var(--border);
+    }
+
+    .stat-box h4 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-box .count {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--dark);
+    }
+
+    .section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: var(--border);
+        margin-left: 1rem;
+    }
+</style>
+
+<div class="main-content">
+    <div class="settings-header">
+        <h2 class="fw-bold">System <span class="text-primary">Settings</span></h2>
+        <p class="text-muted small">Manage application configurations and view system-wide stats.</p>
+    </div>
+
+    <div class="glass-card">
+        <div class="section-title">Database Overview</div>
+
+        <div class="overview-grid">
+            <div class="stat-box">
+                <h4>Total Users</h4>
+                <div class="count text-primary">{{ users }}</div>
+            </div>
+
+            <div class="stat-box">
+                <h4>Inventory Items</h4>
+                <div class="count">{{ products }}</div>
+            </div>
+
+            <div class="stat-box">
+                <h4>Active Suppliers</h4>
+                <div class="count">{{ suppliers }}</div>
+            </div>
+        </div>
+
+        <div class="section-title mt-5">Configuration</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">Company Name</label>
+                <input type="text" class="form-control" value="SR STEEL" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">System Currency</label>
+                <input type="text" class="form-control" value="INR (₹)" readonly>
+            </div>
+        </div>
+    </div>
+</div>

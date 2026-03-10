@@ -1,0 +1,76 @@
+{% include 'sidebar.html' %}
+<div class="main">
+    <h2>GST Billing</h2>
+
+    <form id="gstForm">
+        <input name="customer_name" placeholder="Customer Name">
+        <input name="gst_no" placeholder="GST No">
+
+        <table id="gstTable" border="1" cellpadding="6">
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>GST%</th>
+                <th>Amt</th>
+            </tr>
+        </table>
+
+        <button type="button" onclick="addRow()">Add Item</button>
+        <button type="button" onclick="saveGST()">Save GST Bill</button>
+    </form>
+</div>
+
+<script>
+let products = {{ products|tojson }};
+
+function addRow(){
+    let tr=document.createElement("tr");
+
+    let opts="";
+    products.forEach(p=>{
+        opts+=`<option value="${p.id}" data-rate="${p.selling_price}" data-gst="${p.gst_rate}">
+                ${p.product_name}
+               </option>`;
+    });
+
+    tr.innerHTML=`
+    <td>
+        <select class="pid">${opts}</select>
+    </td>
+    <td><input class="qty" value="1"></td>
+    <td><input class="rate"></td>
+    <td><input class="gst"></td>
+    <td class="amt">0</td>
+    `;
+
+    document.getElementById("gstTable").appendChild(tr);
+
+    let sel=tr.querySelector(".pid");
+    sel.onchange=()=>{
+        let opt=sel.selectedOptions[0];
+        tr.querySelector(".rate").value=opt.dataset.rate;
+        tr.querySelector(".gst").value=opt.dataset.gst;
+    };
+}
+
+function saveGST(){
+    let fd=new FormData(document.getElementById("gstForm"));
+
+    document.querySelectorAll("#gstTable tr").forEach((r,i)=>{
+        if(i==0)return;
+        fd.append("pid[]", r.querySelector(".pid").value);
+        fd.append("qty[]", r.querySelector(".qty").value);
+        fd.append("rate[]", r.querySelector(".rate").value);
+        fd.append("gst[]", r.querySelector(".gst").value);
+    });
+
+    fetch("/save-gst-sale",{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(res=>{
+        if(res.success){
+            alert("GST Bill Saved");
+        }
+    });
+}
+</script>

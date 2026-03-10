@@ -1,0 +1,572 @@
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+     {% include 'sidebar.html' %}
+
+    <main class="content-area">
+        <div class="container-fluid">
+
+            <header class="report-header">
+                <div class="title-meta">
+                    <div class="icon-box-red">
+                        <i class="fas fa-book-open-reader"></i>
+                    </div>
+                    <div>
+                        <h1>Customer Udhari Ledger</h1>
+                        <p>Market Credit & Collection Management</p>
+                    </div>
+                </div>
+                <div class="summary-badge">
+                    <span class="label">Total Market Credit</span>
+                    <span class="value">₹{{ "{:,.2f}".format(grand_total) }}</span>
+                </div>
+            </header>
+
+            <div class="glass-card table-wrapper">
+                <div class="table-header-tool">
+                    <h3>Pending Collections</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="customerSearch" placeholder="Search name or mobile..." onkeyup="filterLedger()">
+                    </div>
+                </div>
+
+                <div class="responsive-table">
+                    <table id="ledgerTable">
+                        <thead>
+                            <tr>
+                                <th>Customer Details</th>
+                                <th class="text-center">Pending Bills</th>
+                                <th>Last Transaction</th>
+                                <th class="text-right">Total Balance</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerBody">
+                            {% for row in ledger %}
+<tr>
+    <!-- CUSTOMER -->
+    <td class="customer-cell"
+        onclick="openCustomerLedger('{{ row.customer_name }}','{{ row.customer_mobile }}')"
+        style="cursor:pointer">
+
+        <span class="name">
+            {{ row.customer_name }}
+            {% if 'CHILLAR' in row.sources %}
+                <span class="badge-chillar">From Chillar</span>
+            {% endif %}
+        </span>
+
+        <span class="phone">
+            <i class="fas fa-phone-alt" style="font-size: 10px;"></i>
+            {{ row.customer_mobile }}
+        </span>
+    </td>
+
+    <!-- BILLS -->
+    <td class="text-center">
+        <span class="bill-count">{{ row.pending_bills }} Bills</span>
+    </td>
+
+    <!-- DATE -->
+    <td class="date-cell">
+        {{ row.last_transaction.strftime('%d %b %Y') }}
+    </td>
+
+    <!-- BALANCE -->
+    <td class="text-right balance-cell">
+        ₹{{ "{:,.2f}".format(row.total_udhari) }}
+    </td>
+
+    <!-- ACTION -->
+    <td class="text-center">
+        <button class="btn-receive"
+        onclick="openPaymentModal('{{ row.customer_name }}','{{ row.customer_mobile }}','{{ row.total_udhari }}')"            <i class="fas fa-hand-holding-dollar"></i>
+            <span>Receive</span>
+        </button>
+    </td>
+</tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="paymentModal" class="modal-overlay">
+    <div class="glass-card modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Receive Payment</h3>
+            <button onclick="closeModal()" class="close-btn">&times;</button>
+        </div>
+        <form id="paymentForm" method="POST">
+            <div class="form-group">
+                <label>Amount being paid (₹)</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-indian-rupee-sign"></i>
+                    <input type="number" name="amount_paid" id="payInput" required step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select name="payment_mode" required>
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>UPI Account</label>
+                <select name="upi_account">
+                    <option value="Owner">Owner</option>
+                    <option value="Staff">Staff</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal()" class="btn-cancel">Cancel</button>
+                <button type="submit" class="btn-confirm">Confirm Payment</button>
+            </div>
+        </form>
+    </div>
+
+<style>
+:root{
+    --primary-red:#ef4444;
+    --success-green:#10b981;
+    --dark-bg:#f8fafc;
+    --sidebar-w:230px;
+    --text-main:#1e293b;
+    --text-muted:#64748b;
+}
+
+/* BASE */
+body{
+    margin:0;
+    background:var(--dark-bg);
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+/* =========================
+   MAIN CONTENT (ERP SYNC)
+========================= */
+.content-area{
+    margin-left:230px;
+    padding:28px;
+    min-height:100vh;
+    transition:.3s;
+}
+
+.badge-chillar{
+    display:inline-block;
+    background:#fff7ed;
+    color:#ea580c;
+    font-size:11px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:6px;
+    margin-left:6px;
+}
+
+select{
+width:100%;
+padding:10px;
+border:1.5px solid #e2e8f0;
+border-radius:10px;
+font-size:14px;
+margin-top:6px;
+}
+
+/* sidebar collapsed */
+.sidebar.collapsed ~ .content-area{
+    margin-left:68px;
+}
+
+/* tablet */
+@media(max-width:1024px){
+    .content-area{
+        margin-left:0;
+        margin-top:70px;
+        padding:20px;
+    }
+}
+
+/* mobile */
+@media(max-width:600px){
+    .content-area{
+        padding:14px;
+    }
+}
+
+/* =========================
+   HEADER
+========================= */
+.report-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:24px;
+}
+
+.title-meta{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.icon-box-red{
+    background:var(--primary-red);
+    color:white;
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    box-shadow:0 8px 18px rgba(239,68,68,.25);
+}
+
+.title-meta h1{
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+    color:var(--text-main);
+}
+
+/* mobile header */
+@media(max-width:768px){
+    .report-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+
+/* =========================
+   SUMMARY BADGE
+========================= */
+.summary-badge{
+    background:white;
+    padding:14px 20px;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+    border-left:5px solid var(--primary-red);
+}
+
+.summary-badge .label{
+    display:block;
+    font-size:10px;
+    font-weight:700;
+    color:var(--text-muted);
+    text-transform:uppercase;
+}
+
+.summary-badge .value{
+    font-size:22px;
+    font-weight:800;
+    color:var(--primary-red);
+}
+
+/* mobile */
+@media(max-width:768px){
+    .summary-badge{
+        width:100%;
+    }
+}
+
+/* =========================
+   CARD
+========================= */
+.glass-card{
+    background:white;
+    border-radius:18px;
+    border:1px solid #f1f5f9;
+    box-shadow:0 8px 22px rgba(0,0,0,.05);
+}
+
+/* =========================
+   TABLE HEADER
+========================= */
+.table-header-tool{
+    padding:18px 22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.table-header-tool h3{
+    margin:0;
+    font-size:16px;
+    font-weight:800;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .table-header-tool{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+    }
+}
+
+/* =========================
+   SEARCH
+========================= */
+.search-box{
+    position:relative;
+}
+
+.search-box i{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--text-muted);
+}
+
+.search-box input{
+    padding:9px 12px 9px 34px;
+    border:1.5px solid #e2e8f0;
+    border-radius:10px;
+    width:260px;
+    font-size:13px;
+}
+
+.search-box input:focus{
+    border-color:var(--primary-red);
+    outline:none;
+    box-shadow:0 0 0 3px rgba(239,68,68,.1);
+}
+
+/* mobile */
+@media(max-width:768px){
+    .search-box input{
+        width:100%;
+    }
+}
+
+/* =========================
+   TABLE
+========================= */
+.responsive-table{
+    overflow-x:auto;
+}
+
+#ledgerTable{
+    width:100%;
+    border-collapse:collapse;
+    min-width:640px;
+}
+
+#ledgerTable th{
+    background:#f8fafc;
+    padding:14px 18px;
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    font-weight:700;
+}
+
+#ledgerTable td{
+    padding:16px 18px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:14px;
+}
+
+.customer-cell .name{
+    display:block;
+    font-weight:700;
+    color:var(--text-main);
+}
+
+.customer-cell .phone{
+    font-size:12px;
+    color:var(--text-muted);
+}
+
+.bill-count{
+    background:#fff1f2;
+    color:#e11d48;
+    padding:4px 10px;
+    border-radius:20px;
+    font-weight:700;
+    font-size:12px;
+}
+
+.balance-cell{
+    font-weight:800;
+    color:var(--primary-red);
+    font-size:15px;
+}
+
+/* =========================
+   BUTTON
+========================= */
+.btn-receive{
+    background:var(--success-green);
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:9px;
+    font-weight:700;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+}
+
+.btn-receive:hover{
+    transform:translateY(-1px);
+    box-shadow:0 4px 10px rgba(16,185,129,.25);
+}
+
+/* mobile icon only */
+@media(max-width:600px){
+    .btn-receive span{
+        display:none;
+    }
+}
+
+/* =========================
+   MODAL
+========================= */
+.modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.6);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+    width:420px;
+    max-width:92%;
+    border-radius:16px;
+    overflow:hidden;
+    animation:slideUp .25s ease;
+}
+
+.modal-header{
+    padding:16px 20px;
+    background:#f8fafc;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.modal-header h3{
+    margin:0;
+    font-size:17px;
+}
+
+form{
+    padding:20px;
+}
+
+.input-with-icon{
+    position:relative;
+    margin-top:8px;
+}
+
+.input-with-icon i{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--success-green);
+}
+
+.input-with-icon input{
+    width:100%;
+    padding:10px 10px 10px 34px;
+    border:1.5px solid #e2e8f0;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+}
+
+.modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+}
+
+.btn-cancel{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    background:#e2e8f0;
+}
+
+.btn-confirm{
+    flex:2;
+    padding:10px;
+    background:var(--success-green);
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+}
+
+/* =========================
+   ANIMATION
+========================= */
+@keyframes slideUp{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+}
+</style>
+
+<script>
+function filterLedger() {
+    let input = document.getElementById("customerSearch");
+    let filter = input.value.toUpperCase();
+    let rows = document.querySelectorAll("#ledgerBody tr");
+    rows.forEach(row => {
+        let text = row.innerText.toUpperCase();
+        row.style.display = text.indexOf(filter) > -1 ? "" : "none";
+    });
+}
+
+function openPaymentModal(name, mobile, amount) {
+
+    document.getElementById('paymentModal').style.display = 'flex';
+
+    document.getElementById('modalTitle').innerText =
+        'Receive from ' + name;
+
+    document.getElementById('payInput').value = amount;
+
+    document.getElementById('paymentForm').action =
+        '/receive-credit-ledger';
+
+    document.getElementById('paymentForm').innerHTML +=
+        `<input type="hidden" name="customer_name" value="${name}">
+         <input type="hidden" name="customer_mobile" value="${mobile}">`;
+}
+
+
+function closeModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    let modal = document.getElementById('paymentModal');
+    if (event.target == modal) closeModal();
+}
+function openCustomerLedger(name, mobile){
+    window.location.href = "/customer-ledger?name="
+        + encodeURIComponent(name)
+        + "&mobile="
+        + encodeURIComponent(mobile);
+}
+</script>

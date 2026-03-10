@@ -1,0 +1,620 @@
+{% include 'sidebar.html' %}
+
+<style>
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --border: #e2e8f0;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --accent: #f1f5f9;
+}
+
+body {
+    background: var(--bg);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    margin:0;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+.main-content{
+margin-left:260px;
+width:calc(100% - 260px);
+padding:30px;
+min-height:100vh;
+display:flex;
+justify-content:center;
+}
+
+@media(max-width:1024px){
+.main-content{
+margin-left:0;
+width:100%;
+padding:20px;
+}
+}
+/* Tablet */
+@media(max-width:1024px){
+.main-content{
+    margin-left:0;
+    padding:20px;
+}
+}
+
+/* Mobile */
+@media(max-width:768px){
+
+.summary-box{
+flex-direction:column;
+gap:15px;
+}
+
+}
+
+/* =========================
+   CARD
+========================= */
+.purchase-card{
+    width:100%;
+    max-width:1000px;
+    background:white;
+    padding:32px;
+    border-radius:18px;
+    border:1px solid #e2e8f0;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.page-title{
+    font-size:24px;
+    font-weight:800;
+    margin-bottom:30px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.page-title i{
+    color:var(--primary);
+}
+
+/* Mobile title */
+
+@media(max-width:600px){
+.page-title{
+    font-size:20px;
+}
+}
+
+/* =========================
+   SECTION
+========================= */
+
+.section-title{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    color:var(--primary);
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+}
+
+.section-title::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:linear-gradient(to right,var(--border),transparent);
+    margin-left:12px;
+}
+
+/* =========================
+   FORM INPUTS
+========================= */
+
+.form-label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-muted);
+    margin-bottom:6px;
+    display:block;
+}
+
+.form-control{
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    padding:11px 14px;
+    font-weight:500;
+    font-size:14px;
+    transition:.2s;
+    background:#fcfcfd;
+}
+
+.form-control:focus{
+    outline:none;
+    border-color:var(--primary);
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+/* =========================
+   TABLE
+========================= */
+
+.table-box{
+border:1px solid #e2e8f0;
+border-radius:14px;
+overflow-x:auto;
+width:100%;
+}
+
+.table{
+width:100%;
+min-width:600px;
+}
+
+.table thead{
+    background:#f1f5f9;
+}
+
+.table th{
+    font-size:12px;
+    font-weight:700;
+    color:#64748b;
+    padding:14px;
+    text-align:left;
+}
+
+.table td{
+    padding:12px;
+}
+
+.table input{
+    width:100%;
+}
+/* =========================
+   SEARCH DROPDOWN
+========================= */
+.search-res{
+position:absolute;
+top:25%;
+left:550;
+width:100%;
+max-width:350px;
+background:#fff;
+border:1px solid #e2e8f0;
+border-radius:10px;
+max-height:220px;
+overflow:auto;
+z-index:9999;
+box-shadow:0 10px 20px rgba(0,0,0,0.08);
+}
+.section-title{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    color:var(--primary);
+    margin-bottom:18px;
+    border-bottom:1px solid #e2e8f0;
+    padding-bottom:6px;
+}
+
+.search-res div{
+    padding:10px;
+    cursor:pointer;
+}
+
+.search-res div:hover{
+    background:#f8fafc;
+}
+
+.search-res span{
+    font-weight:700;
+    display:block;
+}
+
+.search-res small{
+    color:var(--primary);
+    font-size:11px;
+}
+
+/* =========================
+   SUMMARY
+========================= */
+.summary-box{
+margin-top:25px;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:white;
+border-radius:16px;
+padding:22px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+
+@media(max-width:600px){
+
+.purchase-card{
+padding:20px;
+}
+
+.table th,
+.table td{
+font-size:12px;
+}
+
+.summary-value{
+font-size:22px;
+}
+
+.payment-box{
+max-width:100%;
+}
+
+}
+.summary-item{
+text-align:center;
+flex:1;
+}
+
+.summary-label{
+    font-size:11px;
+    color:#94a3b8;
+    text-transform:uppercase;
+    font-weight:700;
+    margin-bottom:6px;
+}
+
+.summary-value{
+font-size:26px;
+font-weight:800;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn-primary{
+    background:var(--primary);
+    border:none;
+    border-radius:10px;
+    padding:14px;
+    font-weight:700;
+}
+
+.btn-primary:hover{
+    background:var(--primary-hover);
+}
+
+.btn-add{
+background:#eef2ff;
+color:#2563eb;
+border:1px dashed #2563eb;
+padding:8px 18px;
+border-radius:8px;
+font-weight:700;
+}
+
+.btn-add:hover{
+    background:rgba(37,99,235,.1);
+}
+
+.btn-danger-light{
+    color:#ef4444;
+    background:#fef2f2;
+    border:none;
+    width:32px;
+    height:32px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* =========================
+   PAID BOX
+========================= */
+
+.payment-box{
+margin-top:25px;
+padding:18px;
+border-radius:12px;
+border:1px solid #e2e8f0;
+background:#f8fafc;
+max-width:300px;
+}
+
+.payment-box input{
+    font-weight:800;
+    color:#10b981;
+    font-size:18px;
+}
+</style>
+
+<div class="main-content">
+    <div class="purchase-card">
+        <div class="page-title">
+            🛒 Purchase <span style="color:var(--primary)">Entry</span>
+        </div>
+
+        <form method="POST" action="/purchase-bill">
+
+            <div class="section-title">Supplier Information</div>
+            <div class="row g-4 mb-5">
+                <div class="col-md-7 position-relative">
+                    <label class="form-label">Supplier Name</label>
+                    <input type="text" id="supplierInput" class="form-control" placeholder="Search by name..." autocomplete="off" required>
+                    <input type="hidden" name="supplier_id" id="supplierId">
+                    <input type="hidden" name="supplier_name" id="supplierName">
+                    <div id="supplierSuggest" class="search-res"></div>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Contact Number</label>
+                    <input type="text" name="supplier_contact" class="form-control" placeholder="+91 00000 00000">
+                </div>
+            </div>
+
+            <div class="section-title">Inventory Items</div>
+            <div class="table-box">
+                <table class="table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>Product Details</th>
+                            <th width="110">Quantity</th>
+                            <th width="160">Rate (₹)</th>
+                            <th width="150">Line Total</th>
+                            <th width="60"></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+<div style="margin-top:12px">
+<button type="button"
+class="btn btn-add"
+onclick="addRow()">
+
++ Add Item
+
+</button>
+</div>
+            <div class="row mt-5 align-items-end">
+                <div class="col-md-4 ms-auto">
+<div class="payment-box">
+<label class="form-label">Amount Paid Now (₹)</label>
+
+<input
+type="number"
+name="paid_amount"
+id="paid"
+value="0"
+oninput="calcTotal()"
+class="form-control">
+
+</div>
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-item">
+                    <div class="summary-label">Total Purchase</div>
+                    <div id="total_display" class="summary-value">₹0.00</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                <div class="summary-item">
+                    <div class="summary-label">Outstanding (Baki)</div>
+                    <div id="baki_display" class="summary-value" style="color: #fb7185;">₹0.00</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow-lg">
+                Confirm & Save Purchase
+            </button>
+        </form>
+    </div>
+</div>
+
+
+<script>
+
+/* ADD ROW */
+
+function addRow(){
+
+let tr=document.createElement("tr");
+
+tr.innerHTML=`
+
+<td style="position:relative">
+
+<input class="form-control prodInput"
+placeholder="Search product">
+
+<input type="hidden" name="product_id[]" class="prodId">
+
+<div class="search-res prodSuggest"></div>
+
+</td>
+
+<td>
+<input name="qty[]" type="number"
+class="form-control"
+value="1"
+oninput="calcRow(this)">
+</td>
+
+<td>
+<input name="rate[]" type="number"
+class="form-control"
+oninput="calcRow(this)">
+</td>
+
+<td class="amt fw-bold">0.00</td>
+
+<td>
+<button type="button"
+class="btn btn-sm btn-danger"
+onclick="this.closest('tr').remove();calcTotal()">✕</button>
+</td>
+
+`;
+
+document.querySelector("#itemsTable tbody").appendChild(tr);
+
+attachProductSearch(tr);
+
+}
+
+/* PRODUCT SEARCH */
+
+function attachProductSearch(tr){
+
+let input=tr.querySelector(".prodInput");
+let box=tr.querySelector(".prodSuggest");
+let idField=tr.querySelector(".prodId");
+
+input.addEventListener("input",function(){
+
+let q=this.value.trim();
+
+if(q.length<1){
+box.style.display="none";
+return;
+}
+
+fetch("/api/search-product?q="+encodeURIComponent(q))
+
+.then(r=>r.json())
+
+.then(data=>{
+
+box.innerHTML="";
+
+data.forEach(p=>{
+
+let div=document.createElement("div");
+
+div.innerHTML=`
+<span>${p.product_name}</span>
+<small>Purchase ₹${p.purchase_price} | Stock ${p.stock_quantity}</small>
+`;
+
+div.onclick=()=>{
+
+input.value=p.product_name;
+
+idField.value=p.id;
+
+let rateInput=tr.querySelector('[name="rate[]"]');
+rateInput.value=p.purchase_price || 0;
+
+box.style.display="none";
+
+calcRow(rateInput);
+
+};
+
+box.appendChild(div);
+
+});
+
+box.style.display="block";
+
+});
+
+});
+
+}
+
+/* CALC ROW */
+
+function calcRow(el){
+
+let tr=el.closest("tr");
+
+let q=parseFloat(tr.querySelector('[name="qty[]"]').value)||0;
+let r=parseFloat(tr.querySelector('[name="rate[]"]').value)||0;
+
+tr.querySelector(".amt").innerText=(q*r).toFixed(2);
+
+calcTotal();
+
+}
+
+/* TOTAL */
+
+function calcTotal(){
+
+let total=0;
+
+document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+total+=parseFloat(r.querySelector(".amt").innerText)||0;
+});
+
+let paid=parseFloat(document.getElementById("paid").value)||0;
+
+document.getElementById("total_display").innerText="₹"+total.toFixed(2);
+
+document.getElementById("baki_display").innerText="₹"+(total-paid).toFixed(2);
+
+}
+
+addRow();
+
+/* SUPPLIER SEARCH */
+
+let supInput=document.getElementById("supplierInput");
+let supBox=document.getElementById("supplierSuggest");
+
+supInput.addEventListener("input",function(){
+
+let q=this.value;
+
+fetch("/api/search-supplier?q="+encodeURIComponent(q))
+
+.then(r=>r.json())
+
+.then(data=>{
+
+supBox.innerHTML="";
+
+data.forEach(s=>{
+
+let div=document.createElement("div");
+
+div.innerText=s.name+" ("+(s.mobile||"-")+")";
+
+div.onclick=()=>{
+
+supInput.value=s.name;
+
+document.getElementById("supplierId").value=s.id;
+document.getElementById("supplierName").value=s.name;
+
+supBox.style.display="none";
+
+};
+
+supBox.appendChild(div);
+
+});
+
+supBox.style.display="block";
+
+});
+
+});
+
+</script>

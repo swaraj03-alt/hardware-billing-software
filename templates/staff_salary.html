@@ -1,0 +1,275 @@
+{% include 'sidebar.html' %}
+
+<style>
+    :root {
+        --primary: #2563eb;
+        --primary-light: #eff6ff;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #0f172a;
+        --bg: #f8fafc;
+        --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+    }
+
+    body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .main {
+        margin-left: 270px;
+        padding: 25px;
+        min-height: 100vh;
+        transition: all 0.3s ease;
+    }
+
+    /* Page Header */
+    .page-title { font-weight: 800; letter-spacing: -1px; font-size: 1.8rem; color: var(--dark); margin-bottom: 5px; }
+    .page-subtitle { color: #64748b; font-weight: 600; font-size: 14px; margin-bottom: 30px; }
+
+    /* Staff Grid & Cards */
+    .staff-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .staff-card {
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 24px;
+        padding: 25px;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s;
+    }
+
+    .staff-card h3 { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+
+    .advance-tag {
+        background: #fef2f2;
+        padding: 15px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        border: 1px solid #fee2e2;
+    }
+
+    /* Form Styles */
+    .form-state { display: none; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .form-control-custom {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #f1f5f9;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        font-weight: 700;
+        font-size: 14px;
+    }
+    .form-control-custom:focus { border-color: var(--primary); outline: none; background: #fff; }
+
+    .btn-action {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 800;
+        border: none;
+        cursor: pointer;
+        margin-top: 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: 0.2s;
+    }
+
+    .btn-salary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+    .btn-salary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3); }
+    .btn-cancel { background: #f1f5f9; color: #64748b; }
+
+    /* History Table (Floating Row Style) */
+    .history-card {
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 24px;
+        padding: 25px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .history-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+    .history-table th {
+        padding: 12px 20px;
+        text-align: left;
+        color: #94a3b8;
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .history-table td {
+        padding: 16px 20px;
+        background: #fbfcfd;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+    .history-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
+    .history-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
+
+    /* Responsive Queries */
+    @media (max-width: 1024px) {
+        .main { margin-left: 0; padding: 20px; padding-top: 80px; }
+    }
+
+    @media (max-width: 600px) {
+        .table-header { flex-direction: column; align-items: flex-start; }
+        #dateSearch { width: 100% !important; }
+        .history-table { display: block; overflow-x: auto; }
+    }
+</style>
+
+<div class="main">
+    <h2 class="page-title">Staff Management</h2>
+    <p class="page-subtitle">Process salaries and manage staff advances efficiently.</p>
+
+    <div class="staff-grid">
+        {% for s in staff %}
+        {% set adv = advances.get(s.id, 0) %}
+        <div class="staff-card">
+            <div id="default-{{s.id}}">
+                <h3>
+                    <div style="width:35px; height:35px; background:var(--primary-light); color:var(--primary); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px;">
+                        {{s.name[0]|upper}}
+                    </div>
+                    {{s.name}}
+                </h3>
+
+                <div class="advance-tag">
+                    <small style="color:var(--danger); font-weight:800; text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Pending Advance</small>
+                    <div style="font-size:24px; font-weight:800; color:var(--danger); letter-spacing:-1px;">₹{{ "{:,.2f}".format(adv) }}</div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="btn-action btn-salary" onclick="showForm('salary', {{s.id}})">
+                        <i class="fas fa-money-check-alt me-2"></i> Pay Salary
+                    </button>
+                    <button class="btn-action" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa;" onclick="showForm('advance', {{s.id}})">
+                        <i class="fas fa-hand-holding-usd me-2"></i> Give Advance
+                    </button>
+                </div>
+            </div>
+
+            <div id="salary-{{s.id}}" class="form-state">
+                <b style="display:block; margin-bottom:15px; font-weight:800; color:var(--primary);">Pay Salary: {{s.name}}</b>
+                <form method="POST" action="/generate-salary">
+                    <input type="hidden" name="user_id" value="{{s.id}}">
+                    <label style="font-size:10px; font-weight:800; color:#64748b; margin-bottom:5px; display:block;">BASE SALARY AMOUNT</label>
+                    <input type="number" name="base_salary" class="form-control-custom" placeholder="e.g. 15000" oninput="calculateNet({{s.id}}, {{adv}})" required>
+
+                    <div style="background:var(--bg); padding:15px; border-radius:12px; margin-bottom:15px; border: 1px dashed #cbd5e1;">
+                        <div style="display:flex; justify-content:space-between; font-size: 12px; font-weight:700; color:#64748b;">
+                            <span>Deduction (Advance):</span>
+                            <span style="color:var(--danger);">- ₹{{ "{:,.2f}".format(adv) }}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-weight:800; margin-top:10px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size:15px;">
+                            <span>Net Payable:</span>
+                            <span id="net-{{s.id}}" style="color:var(--success);">₹0.00</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-action btn-salary">Confirm & Pay</button>
+                </form>
+                <button class="btn-action btn-cancel" onclick="showForm('default', {{s.id}})">Cancel</button>
+            </div>
+
+            <div id="advance-{{s.id}}" class="form-state">
+                <b style="display:block; margin-bottom:15px; font-weight:800; color:#c2410c;">Give Advance: {{s.name}}</b>
+                <form method="POST" action="/give-advance">
+                    <input type="hidden" name="user_id" value="{{s.id}}">
+                    <label style="font-size:10px; font-weight:800; color:#64748b; margin-bottom:5px; display:block;">ADVANCE AMOUNT</label>
+                    <input type="number" name="amount" class="form-control-custom" placeholder="Amount ₹" required>
+                    <button type="submit" class="btn-action" style="background:#c2410c; color:white;">Confirm Advance</button>
+                </form>
+                <button class="btn-action btn-cancel" onclick="showForm('default', {{s.id}})">Cancel</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="history-card">
+        <div class="table-header">
+            <h3 style="font-weight: 800; letter-spacing:-0.5px; margin:0;">Payroll History</h3>
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:12px;"></i>
+                <input type="text" id="dateSearch" placeholder="Search staff or date..."
+                       style="padding: 10px 15px 10px 35px; border: 2px solid #f1f5f9; border-radius: 12px; width: 300px; font-weight:600; font-size:13px;"
+                       onkeyup="searchTable()">
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="history-table" id="payoutTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Staff Name</th>
+                        <th>Base Salary</th>
+                        <th>Deduction</th>
+                        <th>Net Paid</th>
+                        <th style="text-align:right;">Slip</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in history %}
+                    <tr>
+                        <td style="font-weight:700; color:#64748b;">{{ h.payout_date.strftime('%d %b %Y') }}</td>
+                        <td style="font-weight: 800; color:var(--dark);">{{ h.name }}</td>
+                        <td style="font-weight:700;">₹{{ "{:,.2f}".format(h.base_salary) }}</td>
+                        <td style="color: var(--danger); font-weight:700;">- ₹{{ "{:,.2f}".format(h.advance_deducted) }}</td>
+                        <td style="color: var(--success); font-weight: 800;">₹{{ "{:,.2f}".format(h.net_paid) }}</td>
+                        <td style="text-align:right;">
+                            <a href="/print-salary-slip/{{ h.id }}" target="_blank" style="text-decoration:none; background:var(--primary-light); color:var(--primary); padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; text-transform:uppercase;">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function showForm(type, id) {
+    document.getElementById('default-'+id).style.display = 'none';
+    document.getElementById('salary-'+id).style.display = 'none';
+    document.getElementById('advance-'+id).style.display = 'none';
+    document.getElementById(type+'-'+id).style.display = 'block';
+}
+
+function calculateNet(id, adv) {
+    const input = document.querySelector(`#salary-${id} input[name="base_salary"]`);
+    const display = document.getElementById('net-'+id);
+    const net = Math.max(0, (parseFloat(input.value) || 0) - adv);
+    display.innerText = "₹" + net.toLocaleString('en-IN', {minimumFractionDigits: 2});
+}
+
+function searchTable() {
+    let input = document.getElementById("dateSearch");
+    let filter = input.value.toUpperCase();
+    let table = document.getElementById("payoutTable");
+    let tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) {
+        let rowContent = tr[i].textContent || tr[i].innerText;
+        tr[i].style.display = rowContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+}
+</script>

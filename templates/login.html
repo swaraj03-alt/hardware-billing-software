@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login | SR STEEL ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --dark-steel: #0f172a;
+            --accent: #38bdf8;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background-color: #fff;
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .auth-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- LEFT/TOP BRAND SECTION --- */
+        .brand-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle Background Decoration */
+        .brand-section::after {
+            content: '';
+            position: absolute;
+            top: -10%; right: -10%;
+            width: 300px; height: 300px;
+            background: var(--primary);
+            filter: blur(120px);
+            opacity: 0.15;
+            border-radius: 50%;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-self: flex-start;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-pill i { font-size: 0.5rem; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-group img {
+            width:75px; height: 100px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-group h2 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; }
+        .logo-group h2 span { color: var(--accent); }
+
+        .headline h1 { font-size: 2.25rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; }
+        .headline h1 span { color: var(--accent); }
+        .headline p { font-size: 1rem; color: #94a3b8; margin-bottom: 2.5rem; max-width: 480px; }
+
+        .product-showcase {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.25rem 0.75rem;
+            border-radius: 16px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card i { font-size: 1.5rem; color: var(--accent); margin-bottom: 0.75rem; display: block; }
+        .product-card span { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #cbd5e1; display: block; }
+
+        .company-link { text-decoration: none; color: inherit; transition: 0.3s; margin-top: auto; }
+        .company-link h4 { font-size: 0.9rem; letter-spacing: 1.5px; }
+
+        /* --- RIGHT/BOTTOM LOGIN SECTION --- */
+        .login-section {
+            padding: 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff;
+        }
+
+        .login-container { width: 100%; max-width: 420px; }
+
+        .login-intro { text-align: center; margin-bottom: 2.5rem; }
+        .login-intro .badge {
+            background: var(--bg-light); color: var(--text-muted);
+            padding: 0.5rem 1rem; border-radius: 8px;
+            font-size: 0.75rem; font-weight: 700;
+            display: inline-block; margin-bottom: 1rem;
+        }
+        .login-intro h3 { font-size: 2rem; color: var(--dark-steel); font-weight: 800; }
+
+        .form-group { margin-bottom: 1.5rem; position: relative; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--dark-steel); margin-bottom: 0.5rem; }
+
+        .input-ctrl { position: relative; }
+        .input-ctrl i.main-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; }
+
+        .input-ctrl input {
+            width: 100%; padding: 1rem 3.5rem;
+            border: 2px solid var(--border); border-radius: 12px;
+            font-size: 1rem; background: var(--bg-light); transition: 0.2s ease;
+            color: var(--dark-steel);
+        }
+
+        .input-ctrl input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .eye-btn {
+            position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+            padding: 0.75rem; color: var(--text-muted); cursor: pointer; border: none; background: none;
+        }
+
+        .login-btn {
+            width: 100%; padding: 1rem;
+            background: var(--dark-steel); color: white;
+            border: none; border-radius: 12px;
+            font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 0.75rem; transition: 0.3s ease;
+        }
+        .login-btn:hover { background: var(--primary); transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2); }
+
+        .support-footer {
+            margin-top: 4rem; padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .support-link {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            color: var(--dark-steel); text-decoration: none; font-weight: 700; margin-bottom: 1rem;
+        }
+        .support-link i { color: var(--success); }
+
+        .credits { font-size: 0.85rem; color: var(--text-muted); }
+        .credits a { color: var(--dark-steel); text-decoration: none; font-weight: 700; }
+
+        /* --- RESPONSIVE BREAKPOINTS --- */
+        @media (min-width: 1024px) {
+            .auth-wrapper { flex-direction: row; }
+            .brand-section { flex: 1; padding: 4rem 5rem; height: 100vh; }
+            .login-section { flex: 1; padding: 4rem; height: 100vh; }
+            .login-intro { text-align: left; }
+            .headline h1 { font-size: 3.5rem; }
+            .product-card:hover { transform: translateY(-5px); }
+            .support-footer { display: flex; justify-content: space-between; text-align: left; }
+        }
+
+        @media (max-width: 768px) {
+            .brand-section { padding: 4rem 1.5rem 2rem; }
+            .headline h1 { font-size: 2rem; }
+            .product-showcase { gap: 0.5rem; }
+            .product-card { padding: 1rem 0.5rem; }
+            .product-card i { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="auth-wrapper">
+        <section class="brand-section">
+            <div>
+                <div class="status-pill">
+                    <i class="fas fa-circle"></i> ERP SYSTEM ONLINE
+                </div>
+
+                <div class="logo-group">
+                    <img src="static/images/Logo.jpeg" alt="SR Logo">
+                    <h2>SR <span>STEEL</span></h2>
+                </div>
+
+                <div class="headline">
+                    <h1>Owner & Staff<br><span>Portal.</span></h1>
+                    <p>Comprehensive ecosystem for inventory management, smart billing, and real-time supply chain analytics.</p>
+
+                    <div class="product-showcase">
+                        <div class="product-card">
+                            <i class="fas fa-cubes-stacked"></i>
+                            <span>Stock</span>
+                        </div>
+                        <div class="product-card">
+                            <i class="fas fa-file-invoice"></i>
+                            <span>Billing</span>
+                        </div>
+                        <div class="product-card">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Data</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="https://www.digikeycentro.com/" target="_blank" class="company-link">
+                <p style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 0.3rem;">Dev & Infrastructure</p>
+                <h4>DIGIKEY CENTRO <i class="fas fa-external-link-alt" style="font-size: 0.7rem; margin-left: 5px;"></i></h4>
+            </a>
+        </section>
+
+        <section class="login-section">
+            <div class="login-container">
+                <div class="login-intro">
+                    <span class="badge">SECURE GATEWAY</span>
+                    <h3>Authorized Login</h3>
+                    <p>Enter your credentials to access the dashboard.</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div style="background: #fff1f2; color: #be123c; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ffe4e6; display: flex; align-items: center; gap: 0.75rem;">
+                          <i class="fas fa-circle-exclamation"></i> {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <form method="POST" id="loginForm">
+                    <div class="form-group">
+                        <label>Login ID</label>
+                        <div class="input-ctrl">
+                            <i class="fas fa-user-tie main-icon"></i>
+                            <input type="text" name="username" placeholder="Username" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="input-ctrl">
+                            <i class="fas fa-lock main-icon"></i>
+                            <input type="password" name="password" id="passwordField" placeholder="••••••••" required>
+                            <button type="button" class="eye-btn" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" style="width: 16px; height: 16px; accent-color: var(--primary);"> Remember me
+                        </label>
+                        <a href="{{ url_for('forgot_password') }}" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 700;">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="login-btn" id="submitBtn">
+                        <span id="btnTxt">Login to Dashboard</span>
+                        <i class="fas fa-arrow-right" id="btnIcon"></i>
+                    </button>
+                </form>
+
+                <div class="support-footer">
+                    <a href="tel:9823236733" class="support-link">
+                        <i class="fas fa-headset"></i>
+                        <span>Support: +91 9823236733</span>
+                    </a>
+                    <div class="credits">
+                        &copy; 2026 SR STEEL SOLUTIONS<br>
+                        By <a href="https://www.digikeycentro.com/" target="_blank">Digikey Centro</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('passwordField');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                pwd.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        document.getElementById('loginForm').onsubmit = function() {
+            const btn = document.getElementById('submitBtn');
+            const txt = document.getElementById('btnTxt');
+            const icon = document.getElementById('btnIcon');
+
+            txt.innerText = 'Authenticating...';
+            icon.className = 'fas fa-circle-notch fa-spin';
+            btn.style.opacity = '0.8';
+            btn.style.pointerEvents = 'none';
+        };
+    </script>
+</body>
+</html>

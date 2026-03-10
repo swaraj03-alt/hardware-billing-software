@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SR Steel ERP | User Management</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ================================
+   GLOBAL THEME (SYNC WITH SIDEBAR)
+================================ */
+:root{
+    --primary:#2563eb;
+    --primary-light:#eff6ff;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --dark:#0f172a;
+    --bg:#f8fafc;
+}
+
+@media(max-width:768px){
+
+.staff-table td{
+flex-direction:column;
+align-items:flex-start;
+gap:4px;
+}
+
+.staff-table td::before{
+margin-bottom:2px;
+}
+
+}
+@media(max-width:1024px){
+
+.sidebar{
+position:fixed;
+z-index:1000;
+}
+
+.main-container{
+margin-left:0;
+}
+
+}
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:var(--dark);
+    overflow-x:hidden;
+}
+
+/* ================================
+   MAIN LAYOUT (SIDEBAR SYNCED)
+================================ */
+.main-container{
+    margin-left:230px;
+    padding:25px;
+    min-height:100vh;
+    transition:all .3s ease;
+}
+
+/* SIDEBAR COLLAPSED */
+.sidebar.collapsed ~ .main-container{
+    margin-left:68px;
+}
+
+/* TABLET */
+@media(max-width:1024px){
+    .main-container{
+        margin-left:0;
+        margin-top:70px;
+        padding:18px;
+    }
+}
+
+/* MOBILE */
+@media(max-width:768px){
+    .main-container{
+        padding:14px;
+    }
+}
+
+/* ================================
+   HEADER
+================================ */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:white;
+    padding:18px 22px;
+    border-radius:18px;
+    margin-bottom:22px;
+    box-shadow:0 6px 18px rgba(0,0,0,.04);
+    border:1px solid #eef2f7;
+}
+
+.header h2{
+    font-size:1.35rem;
+    font-weight:800;
+}
+
+.header p{
+    font-size:12px;
+    color:#64748b;
+    font-weight:600;
+}
+
+@media(max-width:768px){
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:8px;
+    }
+}
+
+/* ================================
+   FLASH MESSAGES
+================================ */
+.flash-wrap{margin-bottom:18px;}
+
+.flash{
+    padding:12px 16px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.flash.success{
+    background:#dcfce7;
+    color:#166534;
+    border-left:4px solid #22c55e;
+}
+
+.flash.danger{
+    background:#fee2e2;
+    color:#991b1b;
+    border-left:4px solid #ef4444;
+}
+
+/* ================================
+   CARD / DATA BOX
+================================ */
+.data-box{
+    background:white;
+    padding:22px;
+    border-radius:20px;
+    margin-bottom:22px;
+    box-shadow:0 6px 18px rgba(0,0,0,.04);
+    border:1px solid #eef2f7;
+}
+
+.section-title{
+    font-size:1.05rem;
+    font-weight:800;
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+/* ================================
+   USER FORM GRID
+================================ */
+.user-form{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+}
+
+.user-form input,
+.user-form select{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    font-size:13.5px;
+    background:#fbfcfd;
+    transition:.2s;
+    outline:none;
+}
+
+.user-form input:focus,
+.user-form select:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px var(--primary-light);
+}
+
+.btn-primary-custom{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:11px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:.25s;
+}
+
+.btn-primary-custom:hover{
+    transform:translateY(-1px);
+    box-shadow:0 4px 10px rgba(37,99,235,.25);
+}
+
+/* LAPTOP */
+@media(max-width:1200px){
+    .user-form{grid-template-columns:repeat(3,1fr);}
+}
+
+/* TABLET */
+@media(max-width:900px){
+    .user-form{grid-template-columns:repeat(2,1fr);}
+}
+
+/* MOBILE */
+@media(max-width:600px){
+    .user-form{grid-template-columns:1fr;}
+}
+
+/* ================================
+   TABLE
+================================ */
+.staff-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 8px;
+}
+
+.staff-table th{
+    padding:11px 16px;
+    font-size:11px;
+    color:#94a3b8;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    text-align:left;
+}
+
+.staff-table td{
+    padding:14px 16px;
+    background:#fbfcfd;
+    border-top:1px solid #f1f5f9;
+    border-bottom:1px solid #f1f5f9;
+    font-weight:600;
+    font-size:13.5px;
+}
+
+.staff-table td:first-child{
+    border-left:1px solid #f1f5f9;
+    border-radius:10px 0 0 10px;
+}
+
+.staff-table td:last-child{
+    border-right:1px solid #f1f5f9;
+    border-radius:0 10px 10px 0;
+}
+
+/* AVATAR */
+.avatar{
+    width:36px;
+    height:36px;
+    border-radius:9px;
+    background:linear-gradient(135deg,var(--primary),#60a5fa);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    color:white;
+    font-size:14px;
+}
+
+/* BADGES */
+.role-badge{
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+}
+
+.role-owner{background:#eff6ff;color:#1e40af;}
+.role-staff{background:#ecfdf5;color:#065f46;}
+.role-accountant{background:#fffbeb;color:#92400e;}
+
+.status-badge{
+    padding:4px 9px;
+    border-radius:6px;
+    font-size:10px;
+    font-weight:700;
+}
+
+.status-badge.active{background:#dcfce7;color:#166534;}
+.status-badge.inactive{background:#fee2e2;color:#991b1b;}
+
+.btn-sm-custom{
+    padding:7px 9px;
+    border-radius:8px;
+    color:white;
+    text-decoration:none;
+    font-size:11px;
+    transition:.2s;
+}
+
+.btn-sm-custom.warning{background:var(--warning);}
+.btn-sm-custom.danger{background:var(--danger);}
+
+.btn-sm-custom:hover{
+    opacity:.85;
+    transform:translateY(-1px);
+}
+
+.inactive-row{opacity:.55;}
+
+.user-form button{
+grid-column: span 1;
+}
+
+@media(max-width:1200px){
+.user-form button{
+grid-column: span 3;
+}
+}
+
+@media(max-width:900px){
+.user-form button{
+grid-column: span 2;
+}
+}
+
+@media(max-width:600px){
+.user-form button{
+grid-column: span 1;
+}
+}
+
+/* ================================
+   MOBILE TABLE → CARDS
+================================ */
+@media(max-width:768px){
+
+    .staff-table thead{display:none;}
+
+    .staff-table tr{
+        display:block;
+        background:white;
+        border:1px solid #e2e8f0;
+        border-radius:14px;
+        margin-bottom:14px;
+        padding:12px;
+        box-shadow:0 4px 10px rgba(0,0,0,.04);
+    }
+
+    .staff-table td{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:7px 0;
+        border:none !important;
+        font-size:13px;
+    }
+
+    .staff-table td::before{
+        content:attr(data-label);
+        font-weight:700;
+        color:#64748b;
+        font-size:10.5px;
+        text-transform:uppercase;
+    }
+
+    .staff-table td:first-child{
+        margin-bottom:6px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="main-container">
+
+    <header class="header">
+        <div>
+            <h2>User <span style="color:var(--primary)">Management</span></h2>
+            <p style="font-size:12px; color:#64748b; font-weight:600;">Manage system access and roles</p>
+        </div>
+        <div style="text-align:right">
+            <strong style="font-size:.95rem;">{{ username }}</strong><br>
+            <span style="background:var(--primary-light); color:var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase;">{{ role }}</span>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap">
+        {% for category, msg in messages %}
+        <div class="flash {{category}}">
+            <i class="fas {{ 'fa-check-circle' if category=='success' else 'fa-exclamation-triangle' }}"></i>
+            {{msg}}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="data-box">
+        <h3 class="section-title"><i class="fas fa-user-plus" style="color:var(--primary);"></i> Add New User</h3>
+        <form method="POST" action="/add-user" class="user-form">
+            <div class="input-group">
+                <input type="text" name="name" placeholder="Full Name" required>
+            </div>
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="input-group">
+                <input type="text" name="mobile" placeholder="Mobile">
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="input-group">
+                <select name="role">
+                    <option value="staff">Staff</option>
+                    <option value="accountant">Accountant</option>
+                    <option value="owner">Owner</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary-custom">
+                <i class="fas fa-plus"></i> Add User
+            </button>
+        </form>
+    </div>
+
+    <div class="data-box">
+        <h3 class="section-title"><i class="fas fa-users-gear" style="color:var(--primary);"></i> User Records</h3>
+        <div style="overflow-x: auto;">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Mobile</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th width="140" style="text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr class="{{ 'inactive-row' if not u.is_active }}">
+                        <td data-label="Name">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="avatar">{{ u.name[0]|upper }}</div>
+                                {{u.name}}
+                            </div>
+                        </td>
+                        <td data-label="Username">{{u.username}}</td>
+                        <td data-label="Mobile">{{u.mobile}}</td>
+                        <td data-label="Role">
+                            <span class="role-badge role-{{u.role}}">
+                                {{u.role}}
+                            </span>
+                        </td>
+                        <td data-label="Status">
+                            {% if u.is_active %}
+                                <span class="status-badge active">Active</span>
+                            {% else %}
+                                <span class="status-badge inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                       <td data-label="Actions" style="text-align:right">
+<div style="display:flex; gap:8px; justify-content: flex-end;">
+
+<a href="#"
+class="btn-sm-custom"
+style="background:#2563eb"
+onclick="editUser('{{u.id}}','{{u.name}}','{{u.mobile}}')">
+<i class="fas fa-pen"></i>
+</a>
+
+<a href="/toggle-user/{{u.id}}" class="btn-sm-custom warning">
+<i class="fas fa-power-off"></i>
+</a>
+
+<a href="/delete-user/{{u.id}}"
+class="btn-sm-custom danger"
+onclick="return confirm('Delete this user?')">
+<i class="fas fa-trash"></i>
+</a>
+
+</div>
+</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- EDIT USER MODAL -->
+
+<div id="editModal"
+style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.5);
+z-index:9999;
+align-items:center;
+justify-content:center;
+">
+
+<div style="
+background:white;
+padding:25px;
+border-radius:12px;
+width:380px;
+max-width:380px;
+box-shadow:0 10px 40px rgba(0,0,0,.2);
+">
+
+<h3 style="margin-bottom:15px;font-weight:800">
+Edit User
+</h3>
+
+<input type="hidden" id="edit_id">
+
+<div style="margin-bottom:10px">
+<label>Name</label>
+<input id="edit_name" style="width:100%;padding:10px">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Mobile</label>
+<input id="edit_mobile" style="width:100%;padding:10px">
+</div>
+
+<div style="display:flex;gap:10px;margin-top:15px">
+
+<button onclick="saveUser()"
+style="
+background:#2563eb;
+color:white;
+border:none;
+padding:10px 15px;
+border-radius:8px;
+font-weight:700;">
+Save
+</button>
+
+<button onclick="closeModal()"
+style="
+background:#ef4444;
+color:white;
+border:none;
+padding:10px 15px;
+border-radius:8px;
+font-weight:700;">
+Cancel
+</button>
+
+</div>
+
+</div>
+</div>
+</body>
+</html>
+<script>
+
+function editUser(id,name,mobile){
+
+document.getElementById("edit_id").value=id;
+document.getElementById("edit_name").value=name;
+document.getElementById("edit_mobile").value=mobile;
+
+document.getElementById("editModal").style.display="flex";
+
+}
+
+function closeModal(){
+document.getElementById("editModal").style.display="none";
+}
+
+function saveUser(){
+
+let id = document.getElementById("edit_id").value;
+
+let name = document.getElementById("edit_name").value;
+let mobile = document.getElementById("edit_mobile").value;
+
+let formData = new FormData();
+
+formData.append("name", name);
+formData.append("mobile", mobile);
+
+fetch("/update-user/" + id,{
+method:"POST",
+body:formData
+})
+.then(response => response.json())
+.then(data => {
+
+if(data.success){
+
+alert("User updated successfully");
+
+location.reload();
+
+}else{
+
+alert("Update failed");
+
+}
+
+})
+.catch(err=>{
+console.log(err);
+alert("Server error");
+});
+
+}
+</script>

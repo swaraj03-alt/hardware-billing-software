@@ -1,0 +1,257 @@
+{% include 'sidebar.html' %}
+
+<main class="content-area">
+    <div class="container-fluid">
+
+        <!-- ===== HERO HEADER (DASHBOARD STYLE) ===== -->
+        <div class="hero-header">
+            <div class="hero-left">
+                <div class="hero-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+
+                <div>
+                    <div class="hero-title">{{ customer }}</div>
+                    <div class="hero-sub">{{ mobile }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LEDGER CARD ===== -->
+        <div class="glass-card table-wrapper">
+
+            <div class="table-header-tool">
+                <h3>Customer Ledger</h3>
+            </div>
+
+            <div class="responsive-table">
+                <table id="ledgerTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Source</th>
+                            <th>Reference</th>
+                            <th class="text-right">Debit</th>
+                            <th class="text-right">Credit</th>
+                            <th class="text-right">Running Balance</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in ledger %}
+                        <tr onclick="openRef('{{ row.source }}','{{ row.ref_id }}')">
+
+                            <td class="date-cell">
+                                {{ row.created_at.strftime('%d %b %Y') }}
+                            </td>
+
+                            <td>
+
+                            {% if row.source == 'BILL' %}
+                            <span class="badge-bill">Bill</span>
+
+                            {% elif row.source == 'ADVANCE' %}
+                            <span class="badge-advance">Advance</span>
+
+                            {% else %}
+                            <span class="badge-chillar">Chillar</span>
+
+                            {% endif %}
+
+                            </td>
+
+                            <td>#{{ row.ref_id }}</td>
+
+                            <td class="text-right text-danger">
+                                ₹{{ "{:,.2f}".format(row.debit or 0) }}
+                            </td>
+
+                            <td class="text-right text-success">
+                                ₹{{ "{:,.2f}".format(row.credit or 0) }}
+                            </td>
+
+                            <td class="text-right balance-cell">
+                            ₹{{ "{:,.2f}".format(row.running_balance or 0) }}
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<style>
+/* ===== GLOBAL RESET & TYPOGRAPHY ===== */
+body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif; /* Applied globally */
+    background: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ===== CONTENT AREA ===== */
+.content-area {
+    margin-left: 230px;
+    padding: 32px;
+    min-height: 100vh;
+    transition: margin-left .25s ease;
+}
+
+.sidebar.collapsed ~ .content-area {
+    margin-left: 68px;
+}
+
+/* ===== HERO HEADER (MATCHING SIDEBAR DEPTH) ===== */
+.hero-header {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hero-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.hero-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6); /* Match Sidebar Blue */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.hero-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+
+.hero-sub {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* ===== GLASS CARD / TABLE ===== */
+.glass-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.table-header-tool {
+    padding: 20px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-header-tool h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.badge-advance{
+background:#ecfdf5;
+color:#059669;
+padding:5px 12px;
+border-radius:8px;
+font-weight:600;
+font-size:12px;
+}
+
+/* ===== MODERN TABLE STYLING ===== */
+#ledgerTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#ledgerTable th {
+    background: #f8fafc;
+    padding: 14px 24px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+#ledgerTable td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+    color: #334155;
+}
+
+.date-cell {
+    font-weight: 600;
+}
+
+.balance-cell {
+    font-weight: 700;
+    color: #0f172a !important; /* Keep balance neutral but bold */
+}
+
+/* ===== ENHANCED BADGES ===== */
+.badge-bill, .badge-chillar {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.badge-bill { background: #eff6ff; color: #2563eb; }
+.badge-chillar { background: #fff7ed; color: #ea580c; }
+
+/* UTILITIES */
+.text-right { text-align: right; }
+.text-danger { color: #ef4444; font-weight: 600; }
+.text-success { color: #10b981; font-weight: 600; }
+
+#ledgerTable tr:hover {
+    background: #f1f5f9;
+    cursor: pointer;
+}
+
+@media(max-width: 1024px) {
+    .content-area { margin-left: 0; padding: 16px; margin-top: 60px; }
+}
+</style>
+
+<script>
+function openRef(source, id){
+
+    if(source === "BILL"){
+        window.location.href = "/bill-preview/" + id;
+
+    }else if(source === "ADVANCE"){
+        window.location.href = "/advance-receipt/" + id;
+
+    }else{
+        window.location.href = "/chillar-baki";
+    }
+
+}
+</script>

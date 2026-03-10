@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>New Estimate | SR Steel</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+:root{
+--erp-blue:#2563eb;
+--erp-blue-dark:#1d4ed8;
+--erp-soft:#eff6ff;
+}
+
+body{
+background:#f1f5f9;
+font-family:'Plus Jakarta Sans',sans-serif;
+margin:0;
+}
+
+/* MAIN */
+
+.main-content{
+margin-left:230px;
+padding:28px;
+}
+
+.sidebar.collapsed ~ .main-content{
+margin-left:68px;
+}
+
+@media(max-width:1024px){
+.main-content{
+margin-left:0;
+margin-top:70px;
+}
+}
+
+/* HEADER */
+
+.header-wrap{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.header-actions{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+/* CARD */
+
+.estimate-card{
+background:white;
+border-radius:16px;
+padding:24px;
+border-top:5px solid var(--erp-blue);
+box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* BADGE */
+
+.badge-estimate{
+background:var(--erp-soft);
+color:var(--erp-blue-dark);
+border:1px solid #dbeafe;
+font-weight:700;
+}
+
+/* TABLE */
+
+.table-wrapper{
+overflow-x:auto;
+max-height:380px;
+overflow-y:auto;
+}
+
+#items{
+min-width:650px;
+}
+
+/* TOTALS */
+
+.totals-section{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+margin-top:20px;
+gap:20px;
+}
+
+.totals-right{
+width:260px;
+}
+
+.total-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+gap:10px;
+}
+
+.total-row input{
+text-align:right;
+}
+
+.grand-total input{
+font-size:18px;
+font-weight:800;
+background:var(--erp-soft);
+border:2px solid var(--erp-blue);
+}
+
+/* BUTTONS */
+
+.btn-estimate{
+background:var(--erp-blue);
+color:white;
+border:none;
+}
+
+.btn-estimate:hover{
+background:var(--erp-blue-dark);
+}
+
+.btn-group-wrap{
+display:flex;
+justify-content:center;
+gap:10px;
+margin-top:20px;
+}
+
+/* HISTORY */
+
+.history-box{
+display:none;
+margin-top:30px;
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 8px 18px rgba(0,0,0,0.06);
+}
+
+/* PRODUCT SEARCH */
+
+.product-box{
+position:relative;
+}
+
+.product-suggestions{
+position:absolute;
+background:white;
+border:1px solid #ddd;
+width:100%;
+z-index:100;
+max-height:180px;
+overflow-y:auto;
+display:none;
+}
+
+.suggest-item{
+padding:8px 10px;
+cursor:pointer;
+}
+
+.suggest-item:hover{
+background:#eff6ff;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.totals-section{
+flex-direction:column;
+}
+
+.history-box{
+display:none;
+margin-top:30px;
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 8px 18px rgba(0,0,0,0.06);
+transition:0.3s;
+}
+
+.totals-right{
+width:100%;
+}
+
+.btn-group-wrap{
+flex-direction:column;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+{% include 'sidebar.html' %}
+
+<div class="main-content">
+
+<div class="header-wrap">
+
+<div>
+<h2 class="fw-bold">
+<i class="fas fa-file-signature text-primary me-2"></i>
+Kachha Estimate
+</h2>
+<p class="text-muted mb-0">Create quotation (No stock / ledger impact)</p>
+</div>
+
+<div class="header-actions">
+
+<button class="btn btn-outline-dark btn-sm"
+onclick="toggleHistory()"> <i class="fas fa-history"></i> History </button>
+
+<span class="badge badge-estimate px-3 py-2">
+ESTIMATE MODE
+</span>
+
+</div>
+
+</div>
+
+<div class="estimate-card">
+
+<form id="estimateForm">
+
+<input type="hidden" name="bill_type" value="ESTIMATE">
+<input type="hidden" name="status" value="ESTIMATE">
+<input type="hidden" name="payment_mode" value="ESTIMATE">
+
+<div class="row mb-3">
+
+<div class="col-md-6">
+<label class="form-label fw-bold">Customer Name</label>
+<input type="text" name="customer_name" class="form-control">
+</div>
+
+<div class="col-md-6">
+<label class="form-label fw-bold">Mobile</label>
+<input type="text" name="customer_mobile" class="form-control">
+</div>
+
+</div>
+
+<hr>
+
+<div class="table-wrapper">
+
+<table class="table table-bordered align-middle" id="items">
+
+<thead class="table-light">
+
+<tr>
+<th style="width:35%">Product</th>
+<th width="120">Qty</th>
+<th width="150">Rate</th>
+<th width="150">Total</th>
+<th width="60"></th>
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<div class="totals-section">
+
+<div>
+<button type="button"
+class="btn btn-outline-secondary btn-sm"
+onclick="addRow()">
++ Add Item
+</button>
+</div>
+
+<div class="totals-right">
+
+<div class="total-row">
+<label>Hamali</label>
+<input type="number"
+name="hamali"
+id="hamali"
+value="0"
+class="form-control"
+oninput="calcTotal()">
+</div>
+
+<div class="total-row grand-total">
+<label>Grand Total</label>
+<input type="text"
+id="grandTotal"
+class="form-control"
+readonly>
+</div>
+
+</div>
+
+</div>
+
+<div class="btn-group-wrap">
+
+<button type="button"
+class="btn btn-estimate px-4 fw-bold"
+onclick="generateEstimate()"> <i class="fas fa-file-invoice me-2"></i>
+Generate Estimate </button>
+
+<button type="button"
+class="btn btn-success px-4 fw-bold"
+onclick="sendWhatsApp()"> <i class="fab fa-whatsapp me-2"></i>
+Send WhatsApp </button>
+
+</div>
+
+</form>
+
+</div>
+
+<!-- HISTORY -->
+
+<div id="historyBox" class="history-box">
+
+<h5 class="fw-bold mb-3">
+<i class="fas fa-clock me-2"></i>
+Quotation History
+</h5>
+
+<div class="table-wrapper">
+
+<table class="table table-striped">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Customer</th>
+<th>Mobile</th>
+<th>Total</th>
+<th>Date</th>
+<th>Staff</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for h in estimate_history %}
+
+<tr class="history-row">
+<td>#{{h.id}}</td>
+<td>{{h.customer_name}}</td>
+<td>{{h.customer_mobile}}</td>
+<td>₹{{ "%.2f"|format(h.total_amount) }}</td>
+<td>{{h.created_at.strftime("%d %b %Y")}}</td>
+<td>{{h.staff}}</td>
+<td>
+<a href="/pdf-bill/{{h.id}}" target="_blank"
+class="btn btn-sm btn-primary">PDF</a>
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+<div class="text-center mt-3">
+<button id="viewAllBtn"
+class="btn btn-outline-primary btn-sm"
+onclick="showAllHistory()">
+View All
+</button>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const products = {{ products|tojson }};
+
+function addRow(){
+
+let tr=document.createElement("tr");
+
+tr.innerHTML=`
+
+<td class="product-box">
+
+<input type="text"
+class="form-control"
+placeholder="Search or type item"
+oninput="searchProduct(this)"
+onchange="selectProductManual(this)">
+
+<div class="product-suggestions"></div>
+
+<input type="hidden" name="pId[]">
+<input type="hidden" name="pName[]">
+<input type="hidden" name="pPurchaseRate[]">
+
+</td>
+
+<td>
+<input type="number" name="pQty[]" class="form-control"
+oninput="calcTotal()">
+</td>
+
+<td>
+<input type="number" name="pRate[]" class="form-control"
+oninput="calcTotal()">
+</td>
+
+<td class="rowTotal fw-bold text-end">0</td>
+
+<td class="text-center">
+<button type="button"
+class="btn btn-sm btn-danger"
+onclick="this.closest('tr').remove();calcTotal()">×</button>
+</td>
+
+`;
+
+document.querySelector("#items tbody").appendChild(tr);
+
+}
+
+function searchProduct(input){
+
+let value=input.value.toLowerCase();
+let box=input.nextElementSibling;
+
+box.innerHTML="";
+
+if(value.length<1){
+box.style.display="none";
+return;
+}
+
+let matches=products.filter(p =>
+p.product_name.toLowerCase().includes(value)
+).slice(0,6);
+
+if(matches.length===0){
+box.style.display="none";
+return;
+}
+
+matches.forEach(p=>{
+
+let div=document.createElement("div");
+div.className="suggest-item";
+div.innerText=p.product_name;
+
+div.onclick=function(){
+
+input.value=p.product_name;
+
+let tr=input.closest("tr");
+
+tr.querySelector("[name='pId[]']").value=p.id;
+tr.querySelector("[name='pName[]']").value=p.product_name;
+tr.querySelector("[name='pRate[]']").value=p.selling_price;
+tr.querySelector("[name='pPurchaseRate[]']").value=p.purchase_price;
+
+box.style.display="none";
+
+calcTotal();
+
+};
+
+box.appendChild(div);
+
+});
+
+box.style.display="block";
+
+}
+function limitHistory(){
+
+let rows=document.querySelectorAll(".history-row");
+
+rows.forEach((row,index)=>{
+
+if(index>=5){
+row.style.display="none";
+}
+
+});
+
+}
+
+function showAllHistory(){
+
+let rows=document.querySelectorAll(".history-row");
+
+rows.forEach(row=>{
+row.style.display="";
+});
+
+document.getElementById("viewAllBtn").style.display="none";
+
+}
+function selectProductManual(inp){
+
+let value = inp.value.trim();
+let tr = inp.closest("tr");
+
+let product = products.find(
+p => p.product_name.toLowerCase() === value.toLowerCase()
+);
+
+if(product){
+
+tr.querySelector("[name='pId[]']").value = product.id;
+tr.querySelector("[name='pName[]']").value = product.product_name;
+tr.querySelector("[name='pRate[]']").value = product.selling_price;
+tr.querySelector("[name='pPurchaseRate[]']").value = product.purchase_price;
+
+}else{
+
+tr.querySelector("[name='pName[]']").value = value;
+
+}
+
+calcTotal();
+
+}
+
+function calcTotal(){
+
+let gt=0;
+
+document.querySelectorAll("#items tbody tr").forEach(r=>{
+
+let q=parseFloat(r.querySelector("[name='pQty[]']").value)||0;
+let rate=parseFloat(r.querySelector("[name='pRate[]']").value)||0;
+
+let t=q*rate;
+
+r.querySelector(".rowTotal").innerText=t.toFixed(2);
+
+gt+=t;
+
+});
+
+let ham=parseFloat(document.getElementById("hamali").value)||0;
+
+gt+=ham;
+
+document.getElementById("grandTotal").value=gt.toFixed(2);
+
+}
+
+function generateEstimate(){
+
+let fd=new FormData(document.getElementById("estimateForm"));
+
+fetch("/save-bill",{method:"POST",body:fd})
+.then(r=>r.json())
+.then(d=>{
+
+if(d.success){
+
+window.generatedBillId=d.bill_id;
+
+window.open("/pdf-bill/"+d.bill_id,"_blank");
+
+alert("Estimate generated");
+
+}else{
+
+alert(d.msg);
+
+}
+
+});
+
+}
+
+function sendWhatsApp(){
+
+let mobile=document.querySelector("[name='customer_mobile']").value;
+
+if(!mobile){ alert("Enter mobile"); return; }
+
+if(!window.generatedBillId){ alert("Generate estimate first"); return; }
+
+let phone="91"+mobile.replace(/\D/g,'');
+
+let text=encodeURIComponent(
+"Your Estimate:\n"+window.location.origin+"/pdf-bill/"+window.generatedBillId
+);
+
+window.open(`https://wa.me/${phone}?text=${text}`,"_blank");
+
+}
+
+function toggleHistory(){
+
+let box=document.getElementById("historyBox");
+
+if(box.style.display==="block"){
+
+box.style.display="none";
+
+}else{
+
+box.style.display="block";
+
+limitHistory();
+
+setTimeout(()=>{
+box.scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+},100);
+
+}
+
+}
+addRow();
+
+</script>
+
+</body>
+</html>

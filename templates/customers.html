@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#f4f6f9;
+}
+
+.content {
+    margin-left:230px;
+    padding:25px;
+}
+
+h2 {margin-bottom:15px;}
+
+.top-bar {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.top-bar input {
+    padding:8px;
+    flex:1;
+    min-width:200px;
+}
+
+.top-bar button,
+.top-bar a {
+    padding:8px 15px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    text-decoration:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.summary {
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:25px;
+}
+
+.summary-card {
+    flex:1;
+    min-width:220px;
+    background:white;
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.customer-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fill,minmax(260px,1fr));
+    gap:18px;
+}
+
+.customer-card {
+    background:white;
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    cursor:pointer;
+    transition:0.2s ease;
+}
+
+.customer-card:hover {
+    transform:translateY(-4px);
+}
+
+.customer-card h4 {
+    margin:0 0 8px;
+}
+
+.sales {color:#16a34a;font-weight:600;}
+.udhari {color:#dc2626;font-weight:600;}
+.advance {color:#2563eb;font-weight:600;}
+
+.last-date {
+    font-size:12px;
+    color:#666;
+    margin-top:6px;
+}
+
+.pagination {
+    margin-top:25px;
+    text-align:center;
+}
+
+.pagination a {
+    padding:6px 12px;
+    margin:3px;
+    background:#2563eb;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+}
+
+@media(max-width:768px){
+    .content {margin-left:0;}
+}
+</style>
+</head>
+
+<body>
+
+{% include "sidebar.html" %}
+
+<div class="content">
+
+<h2>Customers</h2>
+
+<div class="top-bar">
+
+    <!-- ✅ POST SEARCH FORM -->
+    <form method="POST" style="display:flex;flex:1;gap:10px;">
+        <input type="text" name="q" placeholder="Search by name or mobile">
+        <button type="submit">Search</button>
+    </form>
+
+    <a href="/customers">Clear</a>
+    <a href="/export-customers">Export Excel</a>
+
+</div>
+
+<!-- SUMMARY -->
+<div class="summary">
+    <div class="summary-card">
+        <h4>Total Customers</h4>
+        <h2>{{ total_customers }}</h2>
+    </div>
+
+    <div class="summary-card">
+        <h4>Total Sales</h4>
+        <h2 class="sales">₹ {{ "%.2f"|format(total_sales) }}</h2>
+    </div>
+
+    <div class="summary-card">
+        <h4>Total Udhari</h4>
+        <h2 class="udhari">₹ {{ "%.2f"|format(total_udhari) }}</h2>
+    </div>
+</div>
+
+<!-- CUSTOMER CARDS -->
+<div class="customer-grid">
+{% for c in customers %}
+    <div class="customer-card"
+         onclick="window.location='/customer-ledger?name={{ c.name }}&mobile={{ c.phone }}'">
+
+        <h4>{{ c.name }}</h4>
+        <div>{{ c.phone }}</div>
+
+        <p>Total Sales:
+            <span class="sales">₹ {{ "%.2f"|format(c.total_sales) }}</span>
+        </p>
+
+        <p>Udhari:
+            <span class="udhari">₹ {{ "%.2f"|format(c.total_udhari) }}</span>
+        </p>
+
+        <p>Advance:
+            <span class="advance">₹ {{ "%.2f"|format(c.total_advance) }}</span>
+        </p>
+
+        {% if c.last_date %}
+        <div class="last-date">
+            Last Bill: {{ c.last_date.strftime("%d %b %Y") }}
+        </div>
+        {% endif %}
+    </div>
+{% endfor %}
+</div>
+
+<!-- PAGINATION (NO SEARCH PARAM NOW) -->
+<div class="pagination">
+{% for p in range(1, total_pages+1) %}
+    <a href="?page={{ p }}">{{ p }}</a>
+{% endfor %}
+</div>
+
+</div>
+</body>
+</html>
