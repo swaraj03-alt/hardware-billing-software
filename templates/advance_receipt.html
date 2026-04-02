@@ -16,10 +16,12 @@ padding:0;
 }
 
 .receipt{
-width:760px;
+max-width:760px;
+width:95%;
 margin:auto;
 padding:15px;
 color:#b4363c;
+box-sizing:border-box;
 }
 
 .header{
@@ -28,9 +30,9 @@ position:relative;
 }
 
 .shop{
-font-size:46px;
+font-size:42px;
 font-weight:bold;
-letter-spacing:3px;
+letter-spacing:2px;
 }
 
 .mob{
@@ -40,7 +42,11 @@ top:5px;
 text-align:right;
 font-size:16px;
 }
-
+.customer-box{
+margin-top:6px;
+font-size:16px;
+line-height:1.6;
+}
 .address{
 margin-top:5px;
 font-size:15px;
@@ -108,7 +114,61 @@ margin:5px;
 @media print{
 button{display:none}
 }
+/* MOBILE RESPONSIVE */
 
+@media (max-width:768px){
+
+.shop{
+font-size:32px;
+}
+
+.mob{
+position:static;
+text-align:center;
+margin-top:5px;
+}
+
+.address{
+font-size:13px;
+}
+
+.topinfo{
+flex-direction:column;
+gap:5px;
+font-size:14px;
+}
+
+.customer-box{
+font-size:14px;
+}
+
+th,td{
+font-size:13px;
+padding:5px;
+}
+
+.summary{
+width:100%;
+}
+
+}
+
+@media (max-width:480px){
+
+.shop{
+font-size:28px;
+}
+
+th,td{
+font-size:12px;
+padding:4px;
+}
+
+.customer-box{
+font-size:13px;
+}
+
+}
 </style>
 
 <script>
@@ -187,7 +247,7 @@ Mo. 9822714827<br>
 
 </div>
 
-<div style="margin-top:6px;font-size:16px">
+<div class="customer-box">
 <b>Customer:</b> {{booking.customer_name}} <br>
 <b>Mobile:</b> {{booking.phone}} <br>
 <b>Delivery Date:</b> {{booking.delivery_date}}

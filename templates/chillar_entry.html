@@ -211,8 +211,14 @@ function saveChillar(){
         fd.append("rate[]",r.querySelector(".rate").value)
     })
 
-    fetch("/save-chillar-multi",{method:"POST",body:fd})
-    .then(r=>r.json())
+fetch("/save-chillar-multi",{method:"POST",body:fd})
+.then(r=>{
+    if(!r.ok){
+        alert("Server Error")
+        return
+    }
+    return r.json()
+})
     .then(d=>{
         if(d.success){
             if(payment==="Pending"){

@@ -182,19 +182,26 @@ body{
         {{ t.customer_name }}
     </td>
 
-    <td>
-       {% if t.source == 'bill' %}
-    <a href="/print-bill/{{t.bill_no}}" target="_blank">
+<td>
 
-    {% elif t.source == 'advance' %}
-    <a href="/advance-receipt/{{t.bill_no}}" target="_blank">
+{% if t.source == 'bill' %}
+<a href="/print-bill/{{t.bill_no}}" target="_blank">
+<span class="badge bg-light text-dark">#{{ t.bill_no }}</span>
+</a>
 
-    {% endif %}
-            <span class="badge bg-light text-dark">
-                #{{ t.bill_no }}
-            </span>
-        </a>
-    </td>
+{% elif t.source == 'advance' %}
+<a href="/advance-receipt/{{t.bill_no}}" target="_blank">
+<span class="badge bg-warning text-dark">ADV #{{ t.bill_no }}</span>
+</a>
+
+{% elif t.source == 'chillar' %}
+<span class="badge bg-success">
+    CHILLAR
+</span>
+
+{% endif %}
+
+</td>
 
     <td>
         {% if t.upi_account == "Owner" %}

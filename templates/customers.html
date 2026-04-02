@@ -154,7 +154,7 @@ h2 {margin-bottom:15px;}
 <div class="customer-grid">
 {% for c in customers %}
     <div class="customer-card"
-         onclick="window.location='/customer-ledger?name={{ c.name }}&mobile={{ c.phone }}'">
+        onclick="window.location='/customer-ledger?name={{ c.name }}'"
 
         <h4>{{ c.name }}</h4>
         <div>{{ c.phone }}</div>

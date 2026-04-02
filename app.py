@@ -15,6 +15,7 @@ from openpyxl import Workbook
 from flask import send_file
 import tempfile
 from decimal import Decimal
+from num2words import num2words
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = "hardware_secret"
@@ -39,6 +40,9 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+def number_to_words(n):
+    return num2words(n, lang='en_IN').title()
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -335,7 +339,7 @@ def dashboard():
         IFNULL(
             (SELECT SUM(amount)
              FROM chillar_entries
-             WHERE payment_mode='UPI'
+             WHERE payment_mode IN ('Owner','Staff')
              AND DATE(created_at)=CURDATE()
              AND type='BIKRI'
             ),0
@@ -403,14 +407,18 @@ def dashboard():
     hamal_payments = cur.fetchone()[0] or 0
 
     # =========================
-    # CASH IN FROM BILLS
+    # CASH IN FROM BILLS (REMOVE ADVANCE PART)
     # =========================
     cur.execute("""
-    SELECT IFNULL(SUM(paid_amount),0)
-    FROM bills
-    WHERE DATE(created_at)=CURDATE()
-    AND upi_account='Cash'
-    AND status IN ('DONE','BAKI')
+    SELECT IFNULL(SUM(
+        GREATEST(b.paid_amount - IFNULL(ab.advance_amount,0),0)
+    ),0)
+    FROM bills b
+    LEFT JOIN advance_bookings ab
+        ON b.advance_id = ab.id
+    WHERE DATE(b.created_at)=CURDATE()
+    AND b.upi_account='Cash'
+    AND b.status IN ('DONE','BAKI')
     """)
     cash_bills = cur.fetchone()[0] or 0
 
@@ -514,6 +522,7 @@ def dashboard():
             JOIN bills b ON bi.bill_id = b.id
             WHERE DATE(b.created_at)=CURDATE()
             AND b.status IN ('DONE','BAKI')
+            AND b.advance_id IS NULL
         """)
         net_profit = cur.fetchone()[0] or 0
 
@@ -938,15 +947,17 @@ def save_chillar_multi():
 
     cur = mysql.connection.cursor()
 
+    # insert chillar entry
     cur.execute("""
         INSERT INTO chillar_entries
         (customer_name, customer_mobile, amount,
          payment_mode, type, status, created_at)
         VALUES (%s,%s,%s,%s,%s,%s,NOW())
-    """,(name,mobile,total,payment,ctype,status))
+    """,(name, mobile, total, payment, ctype, status))
 
     chillar_id = cur.lastrowid
 
+    # insert items
     for i in range(len(pids)):
         pid = pids[i]
         if not pid:
@@ -959,21 +970,20 @@ def save_chillar_multi():
             INSERT INTO chillar_items
             (chillar_id, product_id, qty, rate)
             VALUES (%s,%s,%s,%s)
-        """,(chillar_id,pid,q,r))
+        """,(chillar_id, pid, q, r))
 
-        # stock reduce only if not pending
+        # reduce stock only if paid
         if status == "PAID":
             cur.execute("""
                 UPDATE inventory
                 SET stock_quantity = stock_quantity - %s
                 WHERE id=%s
-            """,(q,pid))
+            """,(q, pid))
 
     mysql.connection.commit()
     cur.close()
 
     return jsonify({"success":True})
-
 
 @app.route("/api/product/<int:product_id>")
 @login_required
@@ -1024,6 +1034,118 @@ def inventory():
 
     if request.method == "POST":
 
+        import json
+
+        products_json = request.form.get("products_json")
+
+        # ===== HANDLE MULTIPLE PRODUCTS =====
+        if products_json:
+
+            products = json.loads(products_json)
+
+            for p in products:
+
+                name = (p.get("name") or "").strip().lower()
+                unit = p.get("unit")
+
+                purchase_price = float(p.get("purchase") or 0)
+                selling_price = float(p.get("selling") or 0)
+
+                stock = float(p.get("qty") or 0)
+                min_stock = float(request.form.get("min_stock") or 0)
+
+                supplier_id = p.get("supplier_id")
+                supplier_name = p.get("supplier")
+
+                supplier_id = get_or_create_supplier(cur, supplier_id, supplier_name)
+
+                stock_type = request.form.get("stock_type") or "REGULAR"
+                gst_rate = float(request.form.get("gst_rate") or 0)
+
+                taxable_value = purchase_price * stock
+                gst_amount = (taxable_value * gst_rate) / 100
+
+                cgst = gst_amount / 2
+                sgst = gst_amount / 2
+
+                total_amount = taxable_value + gst_amount
+
+                # check duplicate product
+                cur.execute(
+                    "SELECT id FROM inventory WHERE LOWER(product_name)=%s AND stock_type=%s",
+                    (name, stock_type)
+                )
+                exists = cur.fetchone()
+
+                if exists:
+
+                    # UPDATE STOCK IF PRODUCT EXISTS
+                    cur.execute("""
+                        UPDATE inventory
+                        SET stock_quantity = stock_quantity + %s,
+                            purchase_price=%s,
+                            selling_price=%s,
+                            supplier_id=%s,
+                            rate_updated_at=NOW()
+                        WHERE id=%s
+                    """, (
+                        stock,
+                        purchase_price,
+                        selling_price,
+                        supplier_id,
+                        exists["id"]
+                    ))
+
+                else:
+
+                    # INSERT INVENTORY
+                    cur.execute("""
+                        INSERT INTO inventory
+                        (product_name, unit, purchase_price,
+                         selling_price, stock_quantity,
+                         min_stock_level, stock_type,
+                         supplier_id, gst_rate,
+                         taxable_value, cgst, sgst,
+                         total_amount, purchase_date,
+                         rate_updated_at)
+
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
+                    """, (
+                        name, unit, purchase_price, selling_price,
+                        stock, min_stock, stock_type,
+                        supplier_id, gst_rate,
+                        taxable_value, cgst, sgst, total_amount
+                    ))
+
+                # SUPPLIER LEDGER ENTRY
+                purchase_amount = purchase_price * stock
+
+                cur.execute("""
+                    INSERT INTO supplier_ledger
+                    (
+                    supplier_id,
+                    bill_no,
+                    credit_amount,
+                    debit_amount,
+                    balance_amount,
+                    transaction_date
+                    )
+                    VALUES (%s,%s,%s,%s,%s,NOW())
+                """, (
+                    supplier_id,
+                    name,
+                    purchase_amount,
+                    0,
+                    purchase_amount
+                ))
+
+            mysql.connection.commit()
+
+            flash("Products Added Successfully!", "success")
+            return redirect(url_for("inventory"))
+
+        # ===== ORIGINAL SINGLE PRODUCT LOGIC (UNCHANGED) =====
+
         name = request.form.get("product_name", "").strip().lower()
         unit = request.form.get("unit")
 
@@ -1043,12 +1165,17 @@ def inventory():
         gst_rate = float(request.form.get("gst_rate") or 0)
 
         taxable_value = purchase_price * stock
-        gst_amount = (taxable_value * gst_rate) / 100
+        tax_type = request.form.get("tax_type", "INTRA")
 
-        cgst = gst_amount / 2
-        sgst = gst_amount / 2
+        tax_data = calculate_gst_split(taxable_value, gst_rate, tax_type)
+
+        gst_amount = tax_data["gst_amount"]
+        cgst = tax_data["cgst"]
+        sgst = tax_data["sgst"]
+        igst = tax_data["igst"]
 
         total_amount = taxable_value + gst_amount
+
 
         # check duplicate product
         cur.execute(
@@ -1065,24 +1192,23 @@ def inventory():
 
             # INSERT INVENTORY
             cur.execute("""
-                INSERT INTO inventory
-                (product_name, unit, purchase_price,
-                 selling_price, stock_quantity,
-                 min_stock_level, stock_type,
-                 supplier_id, gst_rate,
-                 taxable_value, cgst, sgst,
-                 total_amount, purchase_date,
-                 rate_updated_at)
+                    INSERT INTO inventory
+                    (product_name, unit, purchase_price,
+                     selling_price, stock_quantity,
+                     min_stock_level, stock_type,
+                     supplier_id, gst_rate,
+                     taxable_value, cgst, sgst, igst,
+                     total_amount, tax_type, purchase_date,
+                     rate_updated_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
+            """, (
+    name, unit, purchase_price, selling_price,
+    stock, min_stock, stock_type,
+    supplier_id, gst_rate,
+    taxable_value, cgst, sgst, igst,
+    total_amount, tax_type
+))
 
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
-            """,(
-                name, unit, purchase_price, selling_price,
-                stock, min_stock, stock_type,
-                supplier_id, gst_rate,
-                taxable_value, cgst, sgst, total_amount
-            ))
-
-            # SUPPLIER LEDGER ENTRY
             purchase_amount = purchase_price * stock
 
             cur.execute("""
@@ -1096,7 +1222,7 @@ def inventory():
                 transaction_date
                 )
                 VALUES (%s,%s,%s,%s,%s,NOW())
-            """,(
+            """, (
                 supplier_id,
                 name,
                 purchase_amount,
@@ -1121,12 +1247,19 @@ def inventory():
     cur.execute("SELECT id,name FROM suppliers ORDER BY name")
     suppliers = cur.fetchall()
 
+    product_id = request.args.get("product_id")
+    product = None
+
+    if product_id:
+        cur.execute("SELECT * FROM inventory WHERE id=%s", (product_id,))
+        product = cur.fetchone()
     cur.close()
 
     return render_template(
         "inventory.html",
         items=items,
         suppliers=suppliers,
+        product=product,
         role=session.get("role")
     )
 
@@ -1517,7 +1650,15 @@ def advance_receipt(id):
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     # Booking
-    cur.execute("SELECT * FROM advance_bookings WHERE id=%s", (id,))
+    cur.execute("""
+    SELECT 
+        ab.*,
+        c.name AS customer_name,
+        c.phone
+    FROM advance_bookings ab
+    LEFT JOIN customers c ON ab.customer_id = c.id
+    WHERE ab.id=%s
+    """, (id,))
     booking = cur.fetchone()
 
     if not booking:
@@ -1698,6 +1839,37 @@ def save_bill():
                 return 0
 
         paid = safe_float(request.form.get("paid_amount"))
+        # ================= HANDLE ADVANCE =================
+        advance_amount = 0
+
+        if advance_id:
+            cur.execute("""
+                SELECT advance_amount
+                FROM advance_bookings
+                WHERE id=%s
+            """, (advance_id,))
+
+            adv = cur.fetchone()
+
+            if adv:
+                advance_amount = float(adv[0] or 0)
+        # ================= INCLUDE ADVANCE PAYMENT =================
+        advance_amount = 0
+
+        if advance_id:
+            cur.execute("""
+                SELECT advance_amount
+                FROM advance_bookings
+                WHERE id=%s
+            """, (advance_id,))
+
+            adv = cur.fetchone()
+
+            if adv:
+                advance_amount = float(adv[0] or 0)
+
+        # total paid including advance
+        total_paid = paid + advance_amount
         hamali_val = safe_float(request.form.get("hamali"))
         bhada_val = safe_float(request.form.get("bhada"))
         hamal_id = request.form.get("hamal_id")
@@ -1714,8 +1886,6 @@ def save_bill():
         purchase_rates = request.form.getlist("pPurchaseRate[]")
         units = request.form.getlist("pUnit[]")
 
-        if bill_type == "ESTIMATE":
-            status = "ESTIMATE"
 
         # ================= ITEMS PROCESS =================
         total_amt = 0
@@ -1748,17 +1918,10 @@ def save_bill():
             pr = safe_float(purchase_rates[i] if i < len(purchase_rates) else 0)
 
             if status != "ESTIMATE" and pid:
-
-                if bill_type == "GST":
-                    cur.execute(
-                        "SELECT stock_quantity FROM gst_inventory WHERE id=%s",
-                        (pid,)
-                    )
-                else:
-                    cur.execute(
-                        "SELECT stock_quantity FROM inventory WHERE id=%s",
-                        (pid,)
-                    )
+                cur.execute(
+                    "SELECT stock_quantity FROM inventory WHERE id=%s",
+                    (pid,)
+                )
 
                 res = cur.fetchone()
                 current_stock = float(res[0]) if res else 0
@@ -1768,23 +1931,100 @@ def save_bill():
 
         # ================= GST =================
         grand_total = total_amt + hamali_val + bhada_val
+        # ================= ESTIMATE SAVE =================
+        if bill_type == "ESTIMATE":
+
+            cur.execute("""
+            INSERT INTO estimates
+            (customer_name, customer_mobile, total_amount, created_by, created_at)
+            VALUES (%s,%s,%s,%s,NOW())
+            """, (
+                customer,
+                mobile,
+                grand_total,
+                session['user_id']
+            ))
+
+            est_id = cur.lastrowid
+
+            for i in range(len(names)):
+
+                pname = names[i]
+                if pname.strip() == "":
+                    continue
+
+                q = float(qtys[i] or 0)
+                r = float(rates[i] or 0)
+
+                cur.execute("""
+                INSERT INTO estimate_items
+                (estimate_id, product_name, quantity, rate, amount)
+                VALUES (%s,%s,%s,%s,%s)
+                """, (
+                    est_id,
+                    pname,
+                    q,
+                    r,
+                    q * r
+                ))
+
+            mysql.connection.commit()
+
+            return jsonify({
+                "success": True,
+                "bill_id": est_id
+            })
+        tax_type = request.form.get("tax_type", "INTRA").strip().upper()
 
         gst_amount = 0
+        cgst_amount = 0
+        sgst_amount = 0
+        igst_amount = 0
         taxable_value = grand_total
 
         if bill_type == "GST" and gst_rate > 0:
-            taxable_value = grand_total / (1 + gst_rate / 100)
+            taxable_value = float(grand_total) / (1 + float(gst_rate) / 100)
             gst_amount = grand_total - taxable_value
 
-        balance = max(grand_total - paid, 0)
+            if tax_type == "INTER":
+                igst_amount = gst_amount
+                cgst_amount = 0
+                sgst_amount = 0
+            else:
+                cgst_amount = gst_amount / 2
+                sgst_amount = gst_amount / 2
+                igst_amount = 0
+        # ================= GET ADVANCE AMOUNT =================
+        advance_amount = 0
 
-        if balance <= 0:
-            status = "DONE"
-        elif paid > 0 and balance > 0:
-            status = "BAKI"
-        elif paid == 0:
-            status = "PENDING"
+        if advance_id:
+            cur.execute("""
+                SELECT advance_amount
+                FROM advance_bookings
+                WHERE id=%s
+            """, (advance_id,))
 
+            adv = cur.fetchone()
+
+            if adv:
+                advance_amount = float(adv[0] or 0)
+
+        # ================= CALCULATE BALANCE =================
+        balance = max(float(grand_total) - float(advance_amount) - float(paid), 0)
+
+        # ================= STATUS LOGIC =================
+
+        # If user saved draft
+        if status == "PENDING":
+            pass
+
+        else:
+
+            if balance <= 0:
+                status = "DONE"
+
+            else:
+                status = "BAKI"
         # ================= UPDATE EXISTING BILL =================
         if edit_id:
             bill_id = edit_id
@@ -1824,29 +2064,36 @@ def save_bill():
                 gst_rate=%s,
                 gst_amount=%s,
                 taxable_value=%s,
+                cgst_amount=%s,
+                sgst_amount=%s,
+                igst_amount=%s,
+                tax_type=%s,
                 bhada_amount=%s,
                 upi_account=%s,
                 upi_id=%s
                 WHERE id=%s
             """, (
-                    customer,
-                    mobile,
-                    buyer_gstin,
-                    grand_total,
-                    paid,
-                    balance,
-                    payment_mode,
-                    status,
-                    bill_type,
-                    gst_rate,
-                    gst_amount,
-                    taxable_value,
-                    bhada_val,
-                    upi_account,
-                    upi_id,
-                    bill_id
-                    ))
-
+                customer,
+                mobile,
+                buyer_gstin,
+                grand_total,
+                paid,
+                balance,
+                payment_mode,
+                status,
+                bill_type,
+                gst_rate,
+                gst_amount,
+                taxable_value,
+                cgst_amount,
+                sgst_amount,
+                igst_amount,
+                tax_type,
+                bhada_val,
+                upi_account,
+                upi_id,
+                bill_id
+            ))
         else:
             staff_id = None
 
@@ -1856,33 +2103,36 @@ def save_bill():
             cur.execute("""
                 INSERT INTO bills
                 (customer_name, customer_mobile, buyer_gstin, total_amount, paid_amount,
-                balance_amount, payment_mode, status, bill_type,
-                gst_rate, gst_amount, taxable_value,
-                bhada_amount,
-                upi_account, upi_id, upi_staff_id,
-                advance_id,
-                created_by, created_at)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+                 balance_amount, payment_mode, status, bill_type,
+                 gst_rate, gst_amount, taxable_value,
+                 cgst_amount, sgst_amount, igst_amount, tax_type,
+                 bhada_amount, upi_account, upi_id, upi_staff_id,
+                 advance_id, created_by, created_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
             """, (
-customer,
-mobile,
-buyer_gstin,
-grand_total,
-paid,
-balance,
-payment_mode,
-status,
-bill_type,
-gst_rate,
-gst_amount,
-taxable_value,
-bhada_val,
-upi_account,
-upi_id,
-staff_id,
-advance_id,
-session['user_id']
-))
+                customer,
+                mobile,
+                buyer_gstin,
+                grand_total,
+                paid,
+                balance,
+                payment_mode,
+                status,
+                bill_type,
+                gst_rate,
+                gst_amount,
+                taxable_value,
+                cgst_amount,
+                sgst_amount,
+                igst_amount,
+                tax_type,
+                bhada_val,
+                upi_account,
+                upi_id,
+                staff_id,
+                advance_id,
+                session['user_id']
+            ))
             bill_id = cur.lastrowid
 
         # ================= INSERT ITEMS =================
@@ -1899,44 +2149,101 @@ session['user_id']
             VALUES (%s,%s,%s,%s,%s,%s,%s)
             """, (bill_id, pid, product_name, q, unit, r, pr))
 
-            if status != "ESTIMATE" and pid:
+            if status != "ESTIMATE":
+                table = "inventory"
 
-                if bill_type == "GST":
-                    table = "gst_inventory"
-                else:
-                    table = "inventory"
+                # 1️⃣ If product selected from inventory
+                if pid:
 
-                # check if product exists
-                cur.execute(f"SELECT stock_quantity FROM {table} WHERE id=%s", (pid,))
-                res = cur.fetchone()
-
-                if res:
-                    # product exists → reduce stock
                     cur.execute(f"""
-                        UPDATE {table}
-                        SET stock_quantity = stock_quantity - %s
-                        WHERE id=%s
+                    UPDATE {table}
+                    SET stock_quantity = stock_quantity - %s
+                    WHERE id=%s
                     """, (q, pid))
+
+                # 2️⃣ If product typed manually
                 else:
-                    # product not in inventory → create with negative stock
+
+                    pname = product_name.strip().lower()
+
                     cur.execute(f"""
-                        INSERT INTO {table} (id, product_name, stock_quantity)
-                        VALUES (%s,%s,%s)
-                    """, (pid, product_name, -q))
-        # ================= CUSTOMER LEDGER =================
-        if balance > 0:
+                    SELECT id, stock_quantity
+                    FROM {table}
+                    WHERE LOWER(product_name)=%s
+                    LIMIT 1
+                    """, (pname,))
+
+                    prod = cur.fetchone()
+
+                    if prod:
+                        new_stock = float(prod[1] or 0) - float(q)
+
+                        cur.execute(f"""
+                        UPDATE {table}
+                        SET stock_quantity=%s
+                        WHERE id=%s
+                        """, (new_stock, prod[0]))
+
+                    else:
+
+                        cur.execute(f"""
+                        INSERT INTO {table}
+                        (product_name, unit, purchase_price, selling_price,
+                         stock_quantity, min_stock_level, stock_type, purchase_date)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,NOW())
+                        """, (
+                            pname,
+                            unit,
+                            pr,
+                            r,
+                            -q,
+                            0,
+                            bill_type.upper()
+                        ))
+            # ================= CUSTOMER LEDGER =================
+
+        if grand_total > 0:
+
+            # 1️⃣ Bill entry (Debit)
             cur.execute("""
-            INSERT INTO customer_ledger
-            (bill_id, customer_name, debit, credit, balance, created_at)
-            VALUES (%s,%s,%s,%s,%s,NOW())
-            """, (
+                 INSERT INTO customer_ledger
+                 (bill_id, customer_name, debit, credit, balance, created_at)
+                 VALUES (%s,%s,%s,%s,%s,NOW())
+             """, (
                 bill_id,
                 customer,
                 grand_total,
-                paid,
+                0,
                 balance
             ))
 
+            # 2️⃣ Advance entry
+            if advance_amount > 0:
+                cur.execute("""
+                     INSERT INTO customer_ledger
+                     (bill_id, customer_name, debit, credit, balance, created_at)
+                     VALUES (%s,%s,%s,%s,%s,NOW())
+                 """, (
+                    bill_id,
+                    customer,
+                    0,
+                    advance_amount,
+                    balance
+                ))
+
+            # 3️⃣ Paid entry
+            if paid > 0:
+                cur.execute("""
+                     INSERT INTO customer_ledger
+                     (bill_id, customer_name, debit, credit, balance, created_at)
+                     VALUES (%s,%s,%s,%s,%s,NOW())
+                 """, (
+                    bill_id,
+                    customer,
+                    0,
+                    paid,
+                    balance
+                ))
         # ================= HAMAL LEDGER ENTRY =================
         if hamal_id and hamali_val > 0:
 
@@ -1947,15 +2254,16 @@ session['user_id']
             new_balance = current_due + hamali_val
 
             cur.execute("""
-                INSERT INTO hamal_ledger
-                (hamal_id, description, credit_amount, debit_amount, balance_amount, created_at)
-                VALUES (%s,%s,%s,%s,%s,NOW())
+            INSERT INTO hamal_ledger
+            (hamal_id, description, credit_amount, debit_amount, balance_amount, created_at, bill_id)
+            VALUES (%s,%s,%s,%s,%s,NOW(),%s)
             """, (
                 hamal_id,
                 f"Bill #{bill_id} Hamali",
                 hamali_val,
                 0,
-                new_balance
+                new_balance,
+                bill_id
             ))
 
             cur.execute("""
@@ -1997,6 +2305,8 @@ session['user_id']
                 SET status='USED'
                 WHERE id=%s
             """, (advance_id,))
+
+
         mysql.connection.commit()
 
         return jsonify({
@@ -2092,29 +2402,37 @@ def daily_report():
 
     # ================= TOTAL SALE =================
     cur.execute(f"""
-       SELECT IFNULL(payment_mode,'UPI') AS payment_mode,
-               SUM(total_bill) AS total_bill,
-               SUM(total_received) AS total_received
-        FROM (
-            SELECT b.payment_mode,
-                   SUM(b.total_amount) AS total_bill,
-                   SUM(b.paid_amount) AS total_received
-            FROM bills b
-            WHERE {date_cond_b}
-            AND b.status IN ('DONE','BAKI')
-            GROUP BY b.payment_mode
+    SELECT 
+        CASE 
+            WHEN payment_mode IN ('Owner','Staff','UPI') THEN 'UPI'
+            ELSE payment_mode
+        END AS payment_mode,
+        SUM(total_bill) AS total_bill,
+        SUM(total_received) AS total_received
+    FROM (
+        SELECT b.payment_mode,
+               SUM(b.total_amount) AS total_bill,
+               SUM(b.paid_amount) AS total_received
+        FROM bills b
+        WHERE {date_cond_b}
+        AND b.status IN ('DONE','BAKI')
+        GROUP BY b.payment_mode
 
-            UNION ALL
+        UNION ALL
 
-            SELECT c.payment_mode,
-                   SUM(c.amount) AS total_bill,
-                   SUM(c.amount) AS total_received
-            FROM chillar_entries c
-            WHERE {date_cond_c}
-            AND c.type='BIKRI'
-            GROUP BY c.payment_mode
-        ) AS combined
-        GROUP BY payment_mode
+        SELECT c.payment_mode,
+               SUM(c.amount) AS total_bill,
+               SUM(c.amount) AS total_received
+        FROM chillar_entries c
+        WHERE {date_cond_c}
+        AND c.type='BIKRI'
+        GROUP BY c.payment_mode
+    ) AS combined
+    GROUP BY 
+        CASE 
+            WHEN payment_mode IN ('Owner','Staff','UPI') THEN 'UPI'
+            ELSE payment_mode
+        END
     """)
 
     sales_summary = cur.fetchall()
@@ -2208,7 +2526,17 @@ def daily_report():
     total_profit = Decimal(cur.fetchone()['profit'] or 0)
 
     net_cash_received = cash_received
+    # ================= JAWAK HISTORY =================
 
+    cur.execute(f"""
+    SELECT amount, description, created_at
+    FROM expenses
+    WHERE DATE(created_at) BETWEEN '{from_date}' AND '{to_date}'
+    ORDER BY created_at DESC
+    LIMIT 20
+    """)
+
+    jawak_history = cur.fetchall()
     cur.close()
 
     return render_template(
@@ -2217,7 +2545,9 @@ def daily_report():
         expenses=total_expenses,
         galla=net_galla_cash,
         period_label=label,
-        profit=total_profit
+        profit=total_profit,
+        jawak_history=jawak_history,
+        current_date=date.today()
     )
 
 @app.route("/payment-history")
@@ -2334,61 +2664,220 @@ def update_supplier(id):
 
     return jsonify({"success":True})
 
-@app.route("/delete-supplier/<int:supplier_id>")
+@app.route("/delete-supplier/<int:id>")
 @login_required
-def delete_supplier(supplier_id):
-
+def delete_supplier(id):
     cur = mysql.connection.cursor()
 
-    # Check if supplier used in inventory
-    cur.execute("""
-        SELECT COUNT(*) 
-        FROM inventory
-        WHERE supplier_id = %s
-    """, (supplier_id,))
-
+    # check ledger exists
+    cur.execute("SELECT COUNT(*) FROM supplier_ledger WHERE supplier_id=%s", (id,))
     count = cur.fetchone()[0]
 
     if count > 0:
-        return redirect(url_for("suppliers"))
+        # deactivate instead of delete
+        cur.execute("UPDATE suppliers SET is_active=0 WHERE id=%s", (id,))
+        mysql.connection.commit()
+        flash("Supplier has ledger history. Deactivated instead.", "warning")
+    else:
+        cur.execute("DELETE FROM suppliers WHERE id=%s", (id,))
+        mysql.connection.commit()
+        flash("Supplier deleted", "success")
 
-    # Delete supplier
-    cur.execute("""
-        DELETE FROM suppliers
-        WHERE id = %s
-    """, (supplier_id,))
-
-    mysql.connection.commit()
     cur.close()
-
     return redirect(url_for("suppliers"))
 
-@app.route('/add-supplier', methods=['GET','POST'])
+@app.route("/add-supplier", methods=["GET", "POST"])
 @login_required
 def add_supplier():
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    if request.method == 'POST':
+    if request.method == "POST":
+        try:
+            import json
+            from datetime import date
 
-        name = request.form['name']
-        mobile = request.form['mobile']
-        address = request.form['address']
-        opening_balance = request.form['opening_balance'] or 0
+            name = request.form.get("name", "").strip()
+            mobile = request.form.get("mobile", "").strip()
+            address = request.form.get("address", "").strip()
+            bill_no = request.form.get("bill_no", "").strip()
+            bill_date = request.form.get("bill_date") or date.today()
 
-        cur = mysql.connection.cursor()
+            products_json = request.form.get("products_json")
 
-        cur.execute("""
-        INSERT INTO suppliers
-        (name, mobile, address, opening_balance)
-        VALUES (%s,%s,%s,%s)
-        """,(name,mobile,address,opening_balance))
+            if not name:
+                flash("Supplier name is required", "danger")
+                return redirect(url_for("add_supplier"))
 
-        mysql.connection.commit()
-        cur.close()
+            cur.execute("SELECT id FROM suppliers WHERE name=%s", (name,))
+            supplier = cur.fetchone()
 
-        return redirect(url_for("suppliers"))
+            if supplier:
+                supplier_id = supplier["id"]
+                cur.execute("""
+                    UPDATE suppliers
+                    SET mobile=%s, address=%s
+                    WHERE id=%s
+                """, (mobile, address, supplier_id))
+            else:
+                cur.execute("""
+                    INSERT INTO suppliers (name, mobile, address, created_at)
+                    VALUES (%s,%s,%s,NOW())
+                """, (name, mobile, address))
+                supplier_id = cur.lastrowid
 
+            total_bill_amount = 0
+
+            if products_json:
+                products = json.loads(products_json)
+
+                for p in products:
+                    item_name = (p.get("item_name") or "").strip()
+                    unit = p.get("unit") or "Pcs"
+                    qty = float(p.get("qty") or 0)
+                    purchase_price = float(p.get("purchase_price") or 0)
+                    selling_price = float(p.get("selling_price") or 0)
+                    stock_type = (p.get("stock_type") or "REGULAR").strip().upper()
+                    gst_rate = float(p.get("gst_rate") or 0)
+
+                    if stock_type not in ["REGULAR", "GST"]:
+                        stock_type = "REGULAR"
+
+                    taxable_value = qty * purchase_price
+
+                    tax_type = (p.get("tax_type") or "INTRA").strip().upper()
+
+                    if stock_type == "GST" and gst_rate > 0:
+                        tax_data = calculate_gst_split(taxable_value, gst_rate, tax_type)
+                        gst_amount = tax_data["gst_amount"]
+                        cgst = tax_data["cgst"]
+                        sgst = tax_data["sgst"]
+                        igst = tax_data["igst"]
+                        total_amount = taxable_value + gst_amount
+                    else:
+                        gst_rate = 0
+                        cgst = 0
+                        sgst = 0
+                        igst = 0
+                        total_amount = taxable_value
+                        tax_type = "INTRA"
+                    amount = float(p.get("amount") or total_amount)
+
+                    if not item_name or qty <= 0:
+                        continue
+
+                    total_bill_amount += amount
+
+                    cur.execute("""
+                        SELECT id
+                        FROM inventory
+                        WHERE LOWER(product_name)=%s AND stock_type=%s
+                        LIMIT 1
+                    """, (item_name.lower(), stock_type))
+                    existing_item = cur.fetchone()
+
+                    if existing_item:
+                        cur.execute("""
+                            UPDATE inventory
+                            SET stock_quantity = stock_quantity + %s,
+                                purchase_price=%s,
+                                selling_price=%s,
+                                supplier_id=%s,
+                                unit=%s,
+                                stock_type=%s,
+                                gst_rate=%s,
+                                taxable_value=%s,
+                                cgst=%s,
+                                sgst=%s,
+                                total_amount=%s,
+                                purchase_date=%s,
+                                rate_updated_at=NOW()
+                            WHERE id=%s
+                        """, (
+                            qty,
+                            purchase_price,
+                            selling_price,
+                            supplier_id,
+                            unit,
+                            stock_type,
+                            gst_rate,
+                            taxable_value,
+                            cgst,
+                            sgst,
+                            amount,
+                            bill_date,
+                            existing_item["id"]
+                        ))
+                    else:
+                        cur.execute("""
+                            INSERT INTO inventory
+                            (product_name, unit, purchase_price, selling_price,
+                             stock_quantity, min_stock_level, stock_type,
+                             supplier_id, gst_rate, taxable_value, cgst, sgst,
+                             total_amount, purchase_date, rate_updated_at)
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+                        """, (
+                            item_name,
+                            unit,
+                            purchase_price,
+                            selling_price,
+                            qty,
+                            0,
+                            stock_type,
+                            supplier_id,
+                            gst_rate,
+                            taxable_value,
+                            cgst,
+                            sgst,
+                            amount,
+                            bill_date
+                        ))
+
+                if total_bill_amount > 0:
+                    cur.execute("""
+                        INSERT INTO supplier_ledger
+                        (supplier_id, bill_no, credit_amount, debit_amount, balance_amount, transaction_date)
+                        VALUES (%s,%s,%s,%s,%s,%s)
+                    """, (
+                        supplier_id,
+                        bill_no if bill_no else f"PURCHASE-{supplier_id}",
+                        total_bill_amount,
+                        0,
+                        total_bill_amount,
+                        bill_date
+                    ))
+
+            mysql.connection.commit()
+            flash("Supplier and products saved successfully!", "success")
+            return redirect(url_for("suppliers_page"))
+
+        except Exception as e:
+            mysql.connection.rollback()
+            print("ADD SUPPLIER ERROR:", e)
+            flash("Error saving supplier", "danger")
+
+    cur.close()
     return render_template("add_supplier.html")
 
+def calculate_gst_split(taxable_value, gst_rate, tax_type="INTRA"):
+    taxable_value = float(taxable_value or 0)
+    gst_rate = float(gst_rate or 0)
+
+    gst_amount = (taxable_value * gst_rate) / 100
+
+    if tax_type == "INTER":
+        return {
+            "gst_amount": gst_amount,
+            "cgst": 0,
+            "sgst": 0,
+            "igst": gst_amount
+        }
+    else:
+        return {
+            "gst_amount": gst_amount,
+            "cgst": gst_amount / 2,
+            "sgst": gst_amount / 2,
+            "igst": 0
+        }
 
 @app.route("/pay-supplier/<int:supplier_id>", methods=["GET","POST"])
 @login_required
@@ -2827,32 +3316,25 @@ def receive_credit_ledger():
 def customer_ledger():
 
     name = request.args.get("name")
-    mobile = request.args.get("mobile")
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # =========================
-    # BILLS (UDHARI)
-    # =========================
+    # BILLS
     cur.execute("""
         SELECT 
             created_at,
             'BILL' AS source,
             id AS ref_id,
             total_amount AS debit,
-            paid_amount AS credit,
-            balance_amount AS balance
+            0 AS credit,
+            total_amount AS balance  
         FROM bills
         WHERE customer_name=%s
-          AND customer_mobile=%s
           AND status!='ESTIMATE'
-    """, (name, mobile))
-
+    """, (name,))
     bills = cur.fetchall()
 
-    # =========================
-    # CHILLAR BAKI
-    # =========================
+    # CHILLAR
     cur.execute("""
         SELECT 
             created_at,
@@ -2863,15 +3345,11 @@ def customer_ledger():
             amount AS balance
         FROM chillar_entries
         WHERE customer_name=%s
-          AND customer_mobile=%s
           AND type='BAKI'
-    """, (name, mobile))
-
+    """, (name,))
     chillar = cur.fetchall()
 
-    # =========================
-    # ADVANCE BOOKINGS
-    # =========================
+    # ADVANCE
     cur.execute("""
         SELECT
             ab.created_at,
@@ -2883,16 +3361,12 @@ def customer_ledger():
         FROM advance_bookings ab
         JOIN customers c ON ab.customer_id = c.id
         WHERE c.name=%s
-          AND c.phone=%s
-    """, (name, mobile))
-
+    """, (name,))
     adv = cur.fetchall()
 
-    # SAFE COMBINE + SORT
     ledger = list(bills) + list(chillar) + list(adv)
     ledger = sorted(ledger, key=lambda x: x["created_at"])
 
-    # ===== RUNNING BALANCE =====
     running = 0
     for row in ledger:
         debit = float(row.get("debit") or 0)
@@ -2900,7 +3374,6 @@ def customer_ledger():
         running += debit - credit
         row["running_balance"] = running
 
-    # latest first for UI
     ledger = list(reversed(ledger))
 
     cur.close()
@@ -2908,8 +3381,7 @@ def customer_ledger():
     return render_template(
         "customer_ledger.html",
         ledger=ledger,
-        customer=name,
-        mobile=mobile
+        customer=name
     )
 
 @app.route("/customers", methods=["GET", "POST"])
@@ -3010,7 +3482,6 @@ def customers():
             JOIN customers cu ON ab.customer_id = cu.id
             WHERE cu.name=%s
             AND cu.phone=%s
-            AND ab.status='ACTIVE'
         """, (c["name"], c["phone"]))
 
         adv_data = cur.fetchone()
@@ -3115,140 +3586,156 @@ def receive_payment(bill_id):
         total_due=bill["balance_amount"]
     )
 
+from flask import request, render_template, send_file
+from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+
 @app.route("/gst-report")
 @login_required
 def gst_report():
-
     filter_type = request.args.get("type", "month")
-    month = request.args.get("month")
-    date_filter = request.args.get("date")
-    year = request.args.get("year")
-    week = request.args.get("week")
-
-    # detect report type
-    report_type = request.args.get("report", "sale")
+    month = request.args.get("month", "").strip()
+    date_filter = request.args.get("date", "").strip()
+    year = request.args.get("year", "").strip()
+    week = request.args.get("week", "").strip()
+    report_type = request.args.get("report", "sale").strip().lower()
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
     params = []
 
-    # =========================
-    # GST SALE REPORT
-    # =========================
-    if report_type == "sale":
+    rows = []
+    grand_total = 0
+    taxable_total = 0
+    gst_total = 0
+    cgst_total = 0
+    sgst_total = 0
+    igst_total = 0
 
+    if report_type == "sale":
         query = """
-            SELECT id AS bill_id,
-                   customer_name,
-                   total_amount,
-                   created_at AS bill_date
+            SELECT
+                id AS bill_id,
+                customer_name,
+                buyer_gstin,
+                total_amount,
+                taxable_value,
+                gst_amount,
+                cgst_amount,
+                sgst_amount,
+                igst_amount,
+                tax_type,
+                created_at AS bill_date
             FROM bills
-            WHERE status!='ESTIMATE'
-            AND bill_type='GST'
+            WHERE status != 'ESTIMATE'
+              AND bill_type = 'GST'
         """
 
         if filter_type == "month" and month:
-            query += " AND DATE_FORMAT(created_at,'%%Y-%%m')=%s"
+            query += " AND DATE_FORMAT(created_at, '%%Y-%%m') = %s"
             params.append(month)
-
         elif filter_type == "date" and date_filter:
-            query += " AND DATE(created_at)=%s"
+            query += " AND DATE(created_at) = %s"
             params.append(date_filter)
-
         elif filter_type == "year" and year:
-            query += " AND YEAR(created_at)=%s"
+            query += " AND YEAR(created_at) = %s"
             params.append(year)
-
         elif filter_type == "week" and week and year:
-            query += " AND YEAR(created_at)=%s AND WEEK(created_at,1)=%s"
+            query += " AND YEAR(created_at) = %s AND WEEK(created_at, 1) = %s"
             params.extend([year, week])
 
         query += " ORDER BY created_at DESC"
-
         cur.execute(query, params)
         rows = cur.fetchall()
 
-        grand_total = 0
-        taxable_total = 0
-        gst_total = 0
-
         for r in rows:
-
-            amt = float(r["total_amount"] or 0)
-
-            taxable = amt / 1.18 if amt else 0
-            gst = amt - taxable
+            taxable = float(r.get("taxable_value") or 0)
+            cgst = float(r.get("cgst_amount") or 0)
+            sgst = float(r.get("sgst_amount") or 0)
+            igst = float(r.get("igst_amount") or 0)
+            gst = float(r.get("gst_amount") or (cgst + sgst + igst))
+            total = float(r.get("total_amount") or 0)
 
             r["taxable"] = taxable
-            r["cgst"] = gst / 2
-            r["sgst"] = gst / 2
-            r["total"] = amt
+            r["cgst"] = cgst
+            r["sgst"] = sgst
+            r["igst"] = igst
+            r["gst_total"] = gst
+            r["total"] = total
+            r["gst_percent"] = round((gst / taxable) * 100, 2) if taxable > 0 else 0
+            r["cgst_percent"] = round((cgst / taxable) * 100, 2) if taxable > 0 else 0
+            r["sgst_percent"] = round((sgst / taxable) * 100, 2) if taxable > 0 else 0
+            r["igst_percent"] = round((igst / taxable) * 100, 2) if taxable > 0 else 0
 
-            grand_total += amt
             taxable_total += taxable
+            cgst_total += cgst
+            sgst_total += sgst
+            igst_total += igst
             gst_total += gst
+            grand_total += total
 
-
-    # =========================
-    # GST PURCHASE REPORT
-    # =========================
     else:
-
         query = """
             SELECT
-                id,
-                product_name,
-                supplier_id,
-                stock_quantity,
-                purchase_price,
-                taxable_value,
-                cgst,
-                sgst,
-                total_amount,
-                purchase_date AS bill_date
-            FROM inventory
-            WHERE stock_type='GST'
+                i.id,
+                i.product_name,
+                s.name AS supplier_name,
+                i.stock_quantity,
+                i.purchase_price,
+                i.taxable_value,
+                i.cgst,
+                i.sgst,
+                i.igst,
+                i.total_amount,
+                i.tax_type,
+                i.purchase_date AS bill_date
+            FROM inventory i
+            LEFT JOIN suppliers s ON i.supplier_id = s.id
+            WHERE i.stock_type = 'GST'
         """
 
         if filter_type == "month" and month:
-            query += " AND DATE_FORMAT(purchase_date,'%%Y-%%m')=%s"
+            query += " AND DATE_FORMAT(i.purchase_date, '%%Y-%%m') = %s"
             params.append(month)
-
         elif filter_type == "date" and date_filter:
-            query += " AND DATE(purchase_date)=%s"
+            query += " AND DATE(i.purchase_date) = %s"
             params.append(date_filter)
-
         elif filter_type == "year" and year:
-            query += " AND YEAR(purchase_date)=%s"
+            query += " AND YEAR(i.purchase_date) = %s"
             params.append(year)
-
         elif filter_type == "week" and week and year:
-            query += " AND YEAR(purchase_date)=%s AND WEEK(purchase_date,1)=%s"
+            query += " AND YEAR(i.purchase_date) = %s AND WEEK(i.purchase_date, 1) = %s"
             params.extend([year, week])
 
-        query += " ORDER BY purchase_date DESC"
-
+        query += " ORDER BY i.purchase_date DESC"
         cur.execute(query, params)
         rows = cur.fetchall()
 
-        grand_total = 0
-        taxable_total = 0
-        gst_total = 0
-
         for r in rows:
-
-            amt = float(r.get("total_amount") or 0)
             taxable = float(r.get("taxable_value") or 0)
-            gst = amt - taxable
+            cgst = float(r.get("cgst") or 0)
+            sgst = float(r.get("sgst") or 0)
+            igst = float(r.get("igst") or 0)
+            gst = cgst + sgst + igst
+            total = float(r.get("total_amount") or 0)
 
             r["taxable"] = taxable
-            r["cgst"] = gst / 2
-            r["sgst"] = gst / 2
-            r["total"] = amt
+            r["cgst"] = cgst
+            r["sgst"] = sgst
+            r["igst"] = igst
+            r["gst_total"] = gst
+            r["total"] = total
+            r["gst_percent"] = round((gst / taxable) * 100, 2) if taxable > 0 else 0
+            r["cgst_percent"] = round((cgst / taxable) * 100, 2) if taxable > 0 else 0
+            r["sgst_percent"] = round((sgst / taxable) * 100, 2) if taxable > 0 else 0
+            r["igst_percent"] = round((igst / taxable) * 100, 2) if taxable > 0 else 0
 
-            grand_total += amt
             taxable_total += taxable
+            cgst_total += cgst
+            sgst_total += sgst
+            igst_total += igst
             gst_total += gst
+            grand_total += total
 
     cur.close()
 
@@ -3256,96 +3743,199 @@ def gst_report():
         "gst_report.html",
         rows=rows,
         report_type=report_type,
+        filter_type=filter_type,
+        month=month,
+        date_filter=date_filter,
+        year=year,
+        week=week,
         taxable=taxable_total,
         tax=gst_total,
+        cgst_total=cgst_total,
+        sgst_total=sgst_total,
+        igst_total=igst_total,
         grand=grand_total
     )
 
 @app.route("/gst-report-excel")
 @login_required
 def gst_report_excel():
-
-    report_type = request.args.get("report", "sale")
+    filter_type = request.args.get("type", "month")
+    month = request.args.get("month", "").strip()
+    date_filter = request.args.get("date", "").strip()
+    year = request.args.get("year", "").strip()
+    week = request.args.get("week", "").strip()
+    report_type = request.args.get("report", "sale").strip().lower()
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-    data = []
+    params = []
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "GST Report"
 
     if report_type == "purchase":
+        query = """
+            SELECT
+                i.purchase_date,
+                i.id,
+                i.product_name,
+                s.name AS supplier_name,
+                i.stock_quantity,
+                i.purchase_price,
+                i.taxable_value,
+                i.cgst,
+                i.sgst,
+                i.igst,
+                i.total_amount,
+                i.tax_type
+            FROM inventory i
+            LEFT JOIN suppliers s ON i.supplier_id = s.id
+            WHERE i.stock_type = 'GST'
+        """
 
-        cur.execute("""
-        SELECT
-            purchase_date,
-            product_name,
-            stock_quantity,
-            purchase_price,
-            total_amount
-        FROM inventory
-        WHERE stock_type='GST'
-        ORDER BY purchase_date DESC
-        """)
+        if filter_type == "month" and month:
+            query += " AND DATE_FORMAT(i.purchase_date, '%%Y-%%m') = %s"
+            params.append(month)
+        elif filter_type == "date" and date_filter:
+            query += " AND DATE(i.purchase_date) = %s"
+            params.append(date_filter)
+        elif filter_type == "year" and year:
+            query += " AND YEAR(i.purchase_date) = %s"
+            params.append(year)
+        elif filter_type == "week" and week and year:
+            query += " AND YEAR(i.purchase_date) = %s AND WEEK(i.purchase_date, 1) = %s"
+            params.extend([year, week])
 
+        query += " ORDER BY i.purchase_date DESC"
+        cur.execute(query, params)
         rows = cur.fetchall()
 
+        headers = [
+            "DATE", "ID", "SUPPLIER", "PRODUCT", "QTY", "PUR RATE",
+            "TAX TYPE", "GST %", "TAXABLE", "CGST", "SGST", "IGST",
+            "GST TOTAL", "TOTAL"
+        ]
+        ws.append(headers)
+
         for r in rows:
+            taxable = round(float(r.get("taxable_value") or 0), 2)
+            cgst = round(float(r.get("cgst") or 0), 2)
+            sgst = round(float(r.get("sgst") or 0), 2)
+            igst = round(float(r.get("igst") or 0), 2)
+            gst_total = round(cgst + sgst + igst, 2)
+            gst_percent = round((gst_total / taxable) * 100, 2) if taxable > 0 else 0
 
-            amt = float(r["total_amount"] or 0)
-
-            taxable = amt / 1.18 if amt else 0
-            gst = amt - taxable
-
-            data.append({
-                "Date": r["purchase_date"],
-                "Product": r["product_name"],
-                "Qty": r["stock_quantity"],
-                "Taxable": round(taxable,2),
-                "CGST": round(gst/2,2),
-                "SGST": round(gst/2,2),
-                "Total": round(amt,2)
-            })
+            ws.append([
+                r["purchase_date"].strftime("%d-%m-%Y") if r.get("purchase_date") else "",
+                r.get("id", ""),
+                r.get("supplier_name", ""),
+                r.get("product_name", ""),
+                float(r.get("stock_quantity") or 0),
+                round(float(r.get("purchase_price") or 0), 2),
+                r.get("tax_type", ""),
+                gst_percent,
+                taxable,
+                cgst,
+                sgst,
+                igst,
+                gst_total,
+                round(float(r.get("total_amount") or 0), 2)
+            ])
 
     else:
+        query = """
+            SELECT
+                id,
+                customer_name,
+                buyer_gstin,
+                taxable_value,
+                cgst_amount,
+                sgst_amount,
+                igst_amount,
+                gst_amount,
+                total_amount,
+                tax_type,
+                created_at
+            FROM bills
+            WHERE bill_type = 'GST'
+              AND status != 'ESTIMATE'
+        """
 
-        cur.execute("""
-        SELECT
-            id,
-            customer_name,
-            total_amount,
-            created_at
-        FROM bills
-        WHERE bill_type='GST'
-        AND status!='ESTIMATE'
-        ORDER BY created_at DESC
-        """)
+        if filter_type == "month" and month:
+            query += " AND DATE_FORMAT(created_at, '%%Y-%%m') = %s"
+            params.append(month)
+        elif filter_type == "date" and date_filter:
+            query += " AND DATE(created_at) = %s"
+            params.append(date_filter)
+        elif filter_type == "year" and year:
+            query += " AND YEAR(created_at) = %s"
+            params.append(year)
+        elif filter_type == "week" and week and year:
+            query += " AND YEAR(created_at) = %s AND WEEK(created_at, 1) = %s"
+            params.extend([year, week])
 
+        query += " ORDER BY created_at DESC"
+        cur.execute(query, params)
         rows = cur.fetchall()
 
+        headers = [
+            "DATE", "BILL NO", "CUSTOMER", "GSTIN", "TAX TYPE", "GST %",
+            "TAXABLE", "CGST", "SGST", "IGST", "GST TOTAL", "TOTAL"
+        ]
+        ws.append(headers)
+
         for r in rows:
+            taxable = round(float(r.get("taxable_value") or 0), 2)
+            cgst = round(float(r.get("cgst_amount") or 0), 2)
+            sgst = round(float(r.get("sgst_amount") or 0), 2)
+            igst = round(float(r.get("igst_amount") or 0), 2)
+            gst_total = round(float(r.get("gst_amount") or (cgst + sgst + igst)), 2)
+            gst_percent = round((gst_total / taxable) * 100, 2) if taxable > 0 else 0
 
-            amt = float(r["total_amount"] or 0)
-
-            taxable = amt / 1.18 if amt else 0
-            gst = amt - taxable
-
-            data.append({
-                "Date": r["created_at"],
-                "Bill No": r["id"],
-                "Customer": r["customer_name"],
-                "Taxable": round(taxable,2),
-                "CGST": round(gst/2,2),
-                "SGST": round(gst/2,2),
-                "Total": round(amt,2)
-            })
+            ws.append([
+                r["created_at"].strftime("%d-%m-%Y") if r.get("created_at") else "",
+                r.get("id", ""),
+                r.get("customer_name", ""),
+                r.get("buyer_gstin", ""),
+                r.get("tax_type", ""),
+                gst_percent,
+                taxable,
+                cgst,
+                sgst,
+                igst,
+                gst_total,
+                round(float(r.get("total_amount") or 0), 2)
+            ])
 
     cur.close()
 
-    df = pd.DataFrame(data)
+    header_fill = PatternFill("solid", fgColor="1E40AF")
+    header_font = Font(color="FFFFFF", bold=True)
 
-    file = "gst_report.xlsx"
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
 
-    df.to_excel(file, index=False)
+    for col in ws.columns:
+        max_len = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            val = "" if cell.value is None else str(cell.value)
+            if len(val) > max_len:
+                max_len = len(val)
+        ws.column_dimensions[col_letter].width = max_len + 3
 
-    return send_file(file, as_attachment=True)
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    filename = f"gst_{report_type}_report.xlsx"
+    return send_file(
+        excel_file,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 @app.route("/gst-register-excel")
 @login_required
@@ -3353,51 +3943,53 @@ def gst_register_excel():
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # =========================
-    # GST SALES DATA
-    # =========================
     cur.execute("""
-    SELECT 
-        b.id,
-        b.customer_name,
-        b.total_amount,
-        b.created_at
-    FROM bills b
-    WHERE b.bill_type='GST'
-    AND b.status!='ESTIMATE'
-    ORDER BY b.created_at DESC
+        SELECT 
+            b.id,
+            b.customer_name,
+            b.buyer_gstin,
+            b.taxable_value,
+            b.cgst_amount,
+            b.sgst_amount,
+            b.igst_amount,
+            b.gst_amount,
+            b.total_amount,
+            b.tax_type,
+            b.created_at
+        FROM bills b
+        WHERE b.bill_type='GST'
+          AND b.status!='ESTIMATE'
+        ORDER BY b.created_at DESC
     """)
-
     sales = cur.fetchall()
 
-    # =========================
-    # GST PURCHASE DATA
-    # =========================
     cur.execute("""
-    SELECT
-        i.product_name,
-        i.purchase_price,
-        i.stock_quantity,
-        s.name AS supplier_name,
-        i.rate_updated_at
-    FROM inventory i
-    LEFT JOIN suppliers s ON i.supplier_id=s.id
-    WHERE i.stock_type='GST'
-    ORDER BY i.rate_updated_at DESC
+        SELECT
+            i.product_name,
+            i.purchase_price,
+            i.stock_quantity,
+            s.name AS supplier_name,
+            i.taxable_value,
+            i.cgst,
+            i.sgst,
+            i.igst,
+            i.total_amount,
+            i.tax_type,
+            i.purchase_date
+        FROM inventory i
+        LEFT JOIN suppliers s ON i.supplier_id=s.id
+        WHERE i.stock_type='GST'
+        ORDER BY i.purchase_date DESC
     """)
-
     purchase = cur.fetchall()
 
     cur.close()
 
     wb = Workbook()
 
-    # =========================
     # PURCHASE SHEET
-    # =========================
     ws = wb.active
     ws.title = "GST Purchase"
-
     ws.append([
         "DATE",
         "SUPPLIER",
@@ -3407,69 +3999,61 @@ def gst_register_excel():
         "TAXABLE",
         "CGST",
         "SGST",
+        "IGST",
+        "TAX TYPE",
         "TOTAL"
     ])
 
     for p in purchase:
-
-        amount = (p["purchase_price"] or 0) * (p["stock_quantity"] or 0)
-
-        taxable = amount / 1.18 if amount else 0
-        tax = amount - taxable
-
-        cgst = tax / 2
-        sgst = tax / 2
-
         ws.append([
-            p["rate_updated_at"],
+            p["purchase_date"],
             p["supplier_name"],
             p["product_name"],
-            p["stock_quantity"],
-            p["purchase_price"],
-            round(taxable,2),
-            round(cgst,2),
-            round(sgst,2),
-            round(amount,2)
+            float(p["stock_quantity"] or 0),
+            float(p["purchase_price"] or 0),
+            round(float(p["taxable_value"] or 0), 2),
+            round(float(p["cgst"] or 0), 2),
+            round(float(p["sgst"] or 0), 2),
+            round(float(p["igst"] or 0), 2),
+            p.get("tax_type", ""),
+            round(float(p["total_amount"] or 0), 2)
         ])
 
-    # =========================
     # SALES SHEET
-    # =========================
     ws2 = wb.create_sheet("GST Sales")
-
     ws2.append([
         "DATE",
+        "BILL NO",
         "CUSTOMER",
+        "GSTIN",
         "TAXABLE",
         "CGST",
         "SGST",
+        "IGST",
+        "GST TOTAL",
+        "TAX TYPE",
         "TOTAL"
     ])
 
     for s in sales:
-
-        amount = s["total_amount"] or 0
-
-        taxable = amount / 1.18 if amount else 0
-        tax = amount - taxable
-
-        cgst = tax / 2
-        sgst = tax / 2
-
         ws2.append([
             s["created_at"],
+            s["id"],
             s["customer_name"],
-            round(taxable,2),
-            round(cgst,2),
-            round(sgst,2),
-            round(amount,2)
+            s.get("buyer_gstin", ""),
+            round(float(s["taxable_value"] or 0), 2),
+            round(float(s["cgst_amount"] or 0), 2),
+            round(float(s["sgst_amount"] or 0), 2),
+            round(float(s["igst_amount"] or 0), 2),
+            round(float(s["gst_amount"] or 0), 2),
+            s.get("tax_type", ""),
+            round(float(s["total_amount"] or 0), 2)
         ])
 
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
     wb.save(tmp.name)
 
     return send_file(tmp.name, as_attachment=True, download_name="gst_register.xlsx")
-
 
 @app.route("/billing")
 @login_required
@@ -3525,6 +4109,11 @@ def billing():
 @login_required
 def print_bill(bill_id):
 
+    from num2words import num2words
+
+    def number_to_words(n):
+        return num2words(n, lang='en_IN').title()
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     # ================= GET BILL =================
@@ -3542,7 +4131,8 @@ def print_bill(bill_id):
         bi.quantity,
         bi.rate,
         bi.unit,
-        COALESCE(i.product_name, bi.product_name) AS product_name
+        COALESCE(i.product_name, bi.product_name) AS product_name,
+        bi.hsn_code
     FROM bill_items bi
     LEFT JOIN inventory i ON bi.product_id = i.id
     WHERE bi.bill_id=%s
@@ -3556,7 +4146,8 @@ def print_bill(bill_id):
     SELECT IFNULL(SUM(credit_amount),0) AS hamali_total
     FROM hamal_ledger
     WHERE bill_id=%s
-    """,(bill_id,))
+    AND description LIKE 'Bill %% Hamali'
+    """, (bill_id,))
 
     hamali_total = cur.fetchone()["hamali_total"]
 
@@ -3566,22 +4157,26 @@ def print_bill(bill_id):
 
     cur.close()
 
+    # ================= AMOUNT IN WORDS =================
+    amount_words = number_to_words(int(bill["total_amount"]))
+
 
     # ================= BILL TYPE =================
     if bill["bill_type"] == "ESTIMATE":
         return render_template(
             "print_estimate.html",
             bill=bill,
-            items=items
+            items=items,
+            amount_words=amount_words
         )
 
     if bill["bill_type"] == "GST":
         return render_template(
             "print_gst_bill.html",
             bill=bill,
-            items=items
+            items=items,
+            amount_words=amount_words
         )
-
 
     # ================= NORMAL BILL =================
     return render_template(
@@ -3589,73 +4184,98 @@ def print_bill(bill_id):
         bill=bill,
         items=items,
         hamali_total=hamali_total,
-        bhada=bhada
+        bhada=bhada,
+        amount_words=amount_words
     )
 
 @app.route("/receipts")
 @login_required
 def receipts():
-
-    q = request.args.get("q","").strip()
-    f_type = request.args.get("type","")
-    f_status = request.args.get("status","")
-    from_date = request.args.get("from")
-    to_date = request.args.get("to")
+    q = request.args.get("q", "").strip()
+    f_type = request.args.get("type", "").strip()
+    f_status = request.args.get("status", "").strip()
+    from_date = request.args.get("from", "").strip()
+    to_date = request.args.get("to", "").strip()
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     query = """
-        SELECT id, customer_name, customer_mobile,
-               total_amount, paid_amount, balance_amount,
-               bill_type, status, created_at
+        SELECT 
+            id,
+            customer_name,
+            customer_mobile,
+            buyer_gstin,
+            total_amount,
+            paid_amount,
+            balance_amount,
+            bill_type,
+            status,
+            taxable_value,
+            gst_rate,
+            gst_amount,
+            cgst_amount,
+            sgst_amount,
+            igst_amount,
+            tax_type,
+            created_at
         FROM bills
         WHERE 1=1
     """
     params = []
 
     if q:
-        query += " AND (customer_name LIKE %s OR CAST(id AS CHAR) LIKE %s)"
-        params += [f"%{q}%", f"%{q}%"]
+        query += """
+            AND (
+                customer_name LIKE %s
+                OR customer_mobile LIKE %s
+                OR CAST(id AS CHAR) LIKE %s
+            )
+        """
+        params += [f"%{q}%", f"%{q}%", f"%{q}%"]
 
+    # BILL TYPE FILTER
     if f_type:
-        query += " AND bill_type=%s"
+        query += " AND bill_type = %s"
         params.append(f_type)
 
-    if f_status:
-        query += " AND status=%s"
-        params.append(f_status)
+    # STATUS FILTER
+    if f_status == "DONE":
+        query += " AND balance_amount <= 0"
+
+    elif f_status == "BAKI":
+        query += " AND balance_amount > 0"
 
     if from_date:
-        query += " AND DATE(created_at)>= %s"
+        query += " AND DATE(created_at) >= %s"
         params.append(from_date)
 
     if to_date:
-        query += " AND DATE(created_at)<= %s"
+        query += " AND DATE(created_at) <= %s"
         params.append(to_date)
 
-    query += " ORDER BY id DESC LIMIT 500"
+    query += " ORDER BY id DESC LIMIT 300"
 
     cur.execute(query, params)
     bills = cur.fetchall()
-    # ================= TOTAL OUTSTANDING =================
-    cur.execute("""
-    SELECT IFNULL(SUM(balance_amount),0) AS total_outstanding
-    FROM bills
-    WHERE balance_amount > 0
-    AND status IN ('BAKI')
-    """)
 
+    cur.execute("""
+        SELECT IFNULL(SUM(balance_amount), 0) AS total_outstanding
+        FROM bills
+        WHERE balance_amount > 0
+          AND bill_type != 'ESTIMATE'
+    """)
     total_outstanding = cur.fetchone()["total_outstanding"]
 
-    # ================= COLLECTED TODAY =================
     cur.execute("""
-    SELECT IFNULL(SUM(paid_amount),0) AS collected_today
-    FROM bills
-    WHERE DATE(created_at) = CURDATE()
+        SELECT IFNULL(SUM(paid_amount), 0) AS collected_today
+        FROM bills
+        WHERE DATE(created_at) = CURDATE()
+          AND bill_type != 'ESTIMATE'
     """)
-
     collected_today = cur.fetchone()["collected_today"]
+
     cur.close()
+
     return render_template(
         "receipts.html",
         bills=bills,
@@ -3939,12 +4559,18 @@ def estimate_history():
             b.total_amount,
             b.created_at,
             u.name AS staff
-        FROM bills b
-        LEFT JOIN users u ON b.created_by=u.id
-        WHERE b.bill_type='ESTIMATE'
-        ORDER BY b.created_at DESC
-        LIMIT 200
-    """)
+        SELECT 
+            e.id,
+            e.customer_name,
+            e.customer_mobile,
+            e.total_amount,
+            e.created_at,
+            u.name AS staff
+        FROM estimates e
+        LEFT JOIN users u ON e.created_by=u.id
+         ORDER BY b.created_at DESC
+                LIMIT 200
+            """)
 
     estimates = cur.fetchall()
 
@@ -4342,16 +4968,15 @@ def estimate():
     # =========================
     cur.execute("""
         SELECT 
-            b.id,
-            b.customer_name,
-            b.customer_mobile,
-            b.total_amount,
-            b.created_at,
+            e.id,
+            e.customer_name,
+            e.customer_mobile,
+            e.total_amount,
+            e.created_at,
             u.name AS staff
-        FROM bills b
-        LEFT JOIN users u ON b.created_by = u.id
-        WHERE b.bill_type='ESTIMATE'
-        ORDER BY b.created_at DESC
+        FROM estimates e
+        LEFT JOIN users u ON e.created_by = u.id
+        ORDER BY e.created_at DESC
         LIMIT 50
     """)
 
@@ -4375,8 +5000,12 @@ def estimate_pdf(est_id):
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    cur.execute("SELECT * FROM estimates WHERE id=%s",(est_id,))
+    cur.execute("SELECT * FROM estimates WHERE id=%s", (est_id,))
     est = cur.fetchone()
+
+    if not est:
+        cur.close()
+        return "Estimate not found", 404
 
     cur.execute("SELECT * FROM estimate_items WHERE estimate_id=%s",(est_id,))
     items = cur.fetchall()
@@ -4395,13 +5024,16 @@ def estimate_pdf(est_id):
 
     pdf.setFont("Helvetica", 10)
     pdf.drawString(40, y, f"Customer: {est['customer_name']}")
-    pdf.drawRightString(width-40, y, f"Date: {est['created_at']}")
+    pdf.drawRightString(
+        width - 40,
+        y,
+        f"Date: {est['created_at'].strftime('%d-%m-%Y')}"
+    )
     y -= 25
 
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawString(40, y, "Item")
-    pdf.drawRightString(350, y, "Qty")
-    pdf.drawRightString(430, y, "Rate")
+    pdf.drawRightString(380, y, "Qty")
     pdf.drawRightString(520, y, "Amount")
     y -= 10
     pdf.line(40, y, 550, y)
@@ -4411,8 +5043,7 @@ def estimate_pdf(est_id):
 
     for it in items:
         pdf.drawString(40, y, it["product_name"][:30])
-        pdf.drawRightString(350, y, str(it["quantity"]))
-        pdf.drawRightString(430, y, f"{it['rate']:.2f}")
+        pdf.drawRightString(380, y, str(it["quantity"]))
         pdf.drawRightString(520, y, f"{it['amount']:.2f}")
         y -= 15
 
@@ -4773,7 +5404,7 @@ def hamal_ledger(hamal_id):
         SELECT *
         FROM hamal_ledger
         WHERE hamal_id=%s
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
     """,(hamal_id,))
 
     rows = cur.fetchall()
@@ -4892,16 +5523,35 @@ def upi_balance_report():
     else:
         date_condition = "1=1"
 
-    # UPI RECEIVED
+    # UPI RECEIVED FROM BILLS
     cur.execute(f"""
         SELECT IFNULL(SUM(paid_amount),0) AS total
         FROM bills
         WHERE upi_account IN ('Owner','Staff')
         AND {date_condition}
     """)
-    received = cur.fetchone()['total']
+    bill_received = cur.fetchone()['total']
 
-    # UPI SPENT
+    # UPI RECEIVED FROM ADVANCE BOOKINGS
+    cur.execute(f"""
+        SELECT IFNULL(SUM(advance_amount),0) AS total
+        FROM advance_bookings
+        WHERE payment_mode IN ('Owner_UPI','Staff_UPI')
+        AND {date_condition}
+    """)
+    advance_received = cur.fetchone()['total']
+    # UPI RECEIVED FROM CHILLAR
+    cur.execute(f"""
+        SELECT IFNULL(SUM(amount),0) AS total
+        FROM chillar_entries
+        WHERE payment_mode IN ('Owner','Staff','UPI')
+        AND type='BIKRI'
+        AND {date_condition}
+    """)
+    chillar_received = cur.fetchone()['total']
+
+    # TOTAL UPI RECEIVED
+    received = float(bill_received) + float(advance_received) + float(chillar_received)    # UPI SPENT
     cur.execute(f"""
         SELECT IFNULL(SUM(amount),0) AS total
         FROM supplier_payments
@@ -4921,6 +5571,27 @@ def upi_balance_report():
         balance=balance,
         filter_type=filter_type
     )
+
+@app.route("/add-expense", methods=["POST"])
+@login_required
+def add_expense():
+
+    amount = float(request.form.get("amount") or 0)
+    description = request.form.get("description")
+    date_val = request.form.get("date")
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("""
+        INSERT INTO expenses
+        (amount, description, created_at)
+        VALUES (%s,%s,%s)
+    """,(amount,description,date_val))
+
+    mysql.connection.commit()
+    cur.close()
+
+    return redirect(url_for("daily_report"))
 
 @app.route("/upi-report")
 @login_required
@@ -4969,36 +5640,36 @@ def upi_report():
 
     # ================= BASE UNION =================
     base_query = f"""
-       SELECT 
-            b.id AS bill_no,
-            b.customer_name,
-            b.paid_amount AS total_amount,
-            b.upi_account,
-            u.name AS staff_name,
-            b.created_at,
-            'bill' AS source
-        FROM bills b
-        LEFT JOIN users u ON b.upi_staff_id = u.id
-        WHERE b.upi_account IN ('Owner','Staff')
-          AND b.paid_amount > 0
-          AND b.status IN ('DONE','BAKI')
-          AND {date_filter_b}
-
+SELECT 
+    b.id AS bill_no,
+    b.customer_name,
+    (b.paid_amount - IFNULL(ab.advance_amount,0)) AS total_amount,
+    b.upi_account,
+    u.name AS staff_name,
+    b.created_at,
+    'bill' AS source
+FROM bills b
+LEFT JOIN users u ON b.upi_staff_id = u.id
+LEFT JOIN advance_bookings ab ON b.advance_id = ab.id
+WHERE b.upi_account IN ('Owner','Staff')
+  AND b.paid_amount > 0
+  AND b.status IN ('DONE','BAKI')
+  AND {date_filter_b}
         UNION ALL
 
-       SELECT
-    c.id AS bill_no,
-    c.customer_name,
-    c.amount AS total_amount,
-    c.upi_account,
-    NULL AS staff_name,
-    c.created_at,
-    'chillar' AS source
+        SELECT
+            c.id AS bill_no,
+            c.customer_name,
+            c.amount AS total_amount,
+            c.payment_mode AS upi_account,
+            NULL AS staff_name,
+            c.created_at,
+            'chillar' AS source
         FROM chillar_entries c
-        WHERE c.payment_mode='UPI'
-          AND {date_filter_c}
-
-        UNION ALL
+        WHERE c.payment_mode IN ('Owner','Staff')
+        AND c.type='BIKRI'
+        AND {date_filter_c}
+                UNION ALL
 
        SELECT
         ab.id AS bill_no,
@@ -5085,16 +5756,18 @@ def cash_tally():
     # =========================
     cur.execute("""
     SELECT 
-        DATE(created_at) as date,
-        CONCAT('Bill #',id) as description,
+        DATE(b.created_at) as date,
+        CONCAT('Bill #',b.id) as description,
         'INCOME' as type,
-        paid_amount as amount
-    FROM bills
-    WHERE DATE(created_at) BETWEEN %s AND %s
-    AND upi_account='Cash'
-    AND status IN ('DONE','BAKI')
-    """,(from_date,to_date))
-
+        CASE 
+            WHEN b.advance_id IS NOT NULL THEN 0
+            ELSE IFNULL(b.paid_amount,0)
+        END as amount
+    FROM bills b
+    WHERE DATE(b.created_at) BETWEEN %s AND %s
+    AND b.upi_account='Cash'
+    AND b.status IN ('DONE','BAKI')
+    """, (from_date, to_date))
     transaction_list += cur.fetchall()
 
 

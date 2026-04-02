@@ -81,7 +81,7 @@ font-weight:700;
 .table-wrapper{
 overflow-x:auto;
 max-height:380px;
-overflow-y:auto;
+overflow-y:visible;
 }
 
 #items{
@@ -159,24 +159,29 @@ position:relative;
 
 .product-suggestions{
 position:absolute;
+top:52%;
+left:0;
 background:white;
-border:1px solid #ddd;
+border:1px solid #d1d5db;
 width:100%;
-z-index:100;
-max-height:180px;
+z-index:9999;
+max-height:200px;
 overflow-y:auto;
 display:none;
+border-radius:8px;
+box-shadow:0 10px 25px rgba(0,0,0,0.15);
 }
 
 .suggest-item{
-padding:8px 10px;
+padding:10px 12px;
 cursor:pointer;
+font-size:14px;
 }
 
 .suggest-item:hover{
 background:#eff6ff;
+color:#2563eb;
 }
-
 /* MOBILE */
 
 @media(max-width:768px){
@@ -373,8 +378,9 @@ Quotation History
 <td>{{h.created_at.strftime("%d %b %Y")}}</td>
 <td>{{h.staff}}</td>
 <td>
-<a href="/pdf-bill/{{h.id}}" target="_blank"
-class="btn btn-sm btn-primary">PDF</a>
+<a href="/estimate-pdf/{{h.id}}" target="_blank" class="btn btn-sm btn-primary">
+    PDF
+</a>
 </td>
 </tr>
 
@@ -533,6 +539,7 @@ p => p.product_name.toLowerCase() === value.toLowerCase()
 
 if(product){
 
+// existing product
 tr.querySelector("[name='pId[]']").value = product.id;
 tr.querySelector("[name='pName[]']").value = product.product_name;
 tr.querySelector("[name='pRate[]']").value = product.selling_price;
@@ -540,6 +547,8 @@ tr.querySelector("[name='pPurchaseRate[]']").value = product.purchase_price;
 
 }else{
 
+// manual product
+tr.querySelector("[name='pId[]']").value = "";
 tr.querySelector("[name='pName[]']").value = value;
 
 }
@@ -575,7 +584,8 @@ document.getElementById("grandTotal").value=gt.toFixed(2);
 
 function generateEstimate(){
 
-let fd=new FormData(document.getElementById("estimateForm"));
+let form = document.getElementById("estimateForm");
+let fd=new FormData(form);
 
 fetch("/save-bill",{method:"POST",body:fd})
 .then(r=>r.json())
@@ -585,9 +595,19 @@ if(d.success){
 
 window.generatedBillId=d.bill_id;
 
-window.open("/pdf-bill/"+d.bill_id,"_blank");
+window.open("/estimate-pdf/"+d.bill_id,"_blank");
 
 alert("Estimate generated");
+
+// ✅ CLEAR FORM
+form.reset();
+
+// clear rows
+document.querySelector("#items tbody").innerHTML="";
+addRow();
+
+// reset total
+document.getElementById("grandTotal").value="0";
 
 }else{
 
@@ -598,7 +618,6 @@ alert(d.msg);
 });
 
 }
-
 function sendWhatsApp(){
 
 let mobile=document.querySelector("[name='customer_mobile']").value;
@@ -610,7 +629,7 @@ if(!window.generatedBillId){ alert("Generate estimate first"); return; }
 let phone="91"+mobile.replace(/\D/g,'');
 
 let text=encodeURIComponent(
-"Your Estimate:\n"+window.location.origin+"/pdf-bill/"+window.generatedBillId
+"Your Estimate:\n"+window.location.origin+"/estimate-pdf/"+window.generatedBillId
 );
 
 window.open(`https://wa.me/${phone}?text=${text}`,"_blank");

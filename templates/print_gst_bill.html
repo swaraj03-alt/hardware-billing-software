@@ -84,7 +84,7 @@ padding:6px;
 }
 
 .items th{
-background:#f2f2f2;
+background:#eaeaea;
 }
 
 .right{text-align:right;}
@@ -93,7 +93,7 @@ background:#f2f2f2;
 /* TOTAL TABLE */
 
 .totals{
-width:300px;
+width:320px;
 margin-left:auto;
 margin-top:10px;
 border-collapse:collapse;
@@ -133,11 +133,7 @@ cursor:pointer;
 }
 
 @media print{
-
-.buttons{
-display:none;
-}
-
+.buttons{display:none;}
 }
 
 </style>
@@ -184,7 +180,6 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 <table class="meta">
 
 <tr>
-
 <td>
 <b>Invoice No:</b> {{bill.id}}<br>
 <b>Date:</b> {{bill.created_at.strftime("%d-%m-%Y %H:%M")}}
@@ -194,20 +189,35 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 <b>Payment Mode:</b> {{bill.payment_mode}}<br>
 <b>Place of Supply:</b> Maharashtra
 </td>
-
 </tr>
 
 <tr>
-
 <td>
 <b>Buyer:</b> {{bill.customer_name}}<br>
 <b>Mobile:</b> {{bill.customer_mobile}}
 </td>
 
 <td>
-<b>Buyer GSTIN:</b> <b>Buyer GSTIN:</b> {{bill.buyer_gstin or "-"}}
+<b>Buyer GSTIN:</b> {{bill.buyer_gstin or "-"}}
 </td>
+</tr>
 
+<tr>
+<td>
+<b>Transport:</b> {{bill.transport or "-"}}
+</td>
+<td>
+<b>Vehicle No:</b> {{bill.vehicle_no or "-"}}
+</td>
+</tr>
+
+<tr>
+<td>
+<b>Broker:</b> {{bill.broker or "-"}}
+</td>
+<td>
+<b>Delivery Place:</b> {{bill.delivery_place or "-"}}
+</td>
 </tr>
 
 </table>
@@ -229,36 +239,28 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 {% set ns = namespace(i=1,total=0) %}
 
 {% for it in items %}
-
 {% set amt = it.quantity * it.rate %}
 {% set ns.total = ns.total + amt %}
 
 <tr>
-
 <td class="center">{{ns.i}}</td>
-
 <td>{{it.product_name}}</td>
-
 <td class="center">{{it.hsn_code or "85005"}}</td>
-
 <td class="center">{{it.quantity}}</td>
-
 <td class="right">{{"%.2f"|format(it.rate)}}</td>
-
 <td class="right">{{"%.2f"|format(amt)}}</td>
-
 </tr>
 
 {% set ns.i = ns.i + 1 %}
-
 {% endfor %}
 
 </table>
 
-<!-- TAX -->
+<!-- TAX TOTALS -->
 
-{% set cgst = bill.gst_amount/2 %}
-{% set sgst = bill.gst_amount/2 %}
+{% set cgst = bill.cgst_amount %}
+{% set sgst = bill.sgst_amount %}
+{% set igst = bill.igst_amount %}
 
 <table class="totals">
 
@@ -267,6 +269,7 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 <td class="right">₹{{"%.2f"|format(bill.taxable_value)}}</td>
 </tr>
 
+{% if cgst > 0 %}
 <tr>
 <td>CGST ({{bill.gst_rate/2}}%)</td>
 <td class="right">₹{{"%.2f"|format(cgst)}}</td>
@@ -276,6 +279,19 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 <td>SGST ({{bill.gst_rate/2}}%)</td>
 <td class="right">₹{{"%.2f"|format(sgst)}}</td>
 </tr>
+{% endif %}
+
+{% if igst > 0 %}
+<tr>
+<td>IGST ({{bill.gst_rate}}%)</td>
+<td class="right">₹{{"%.2f"|format(igst)}}</td>
+</tr>
+{% endif %}
+
+<tr>
+<td>Round Off</td>
+<td class="right">₹{{"%.2f"|format(bill.round_off or 0)}}</td>
+</tr>
 
 <tr>
 <td><b>Grand Total</b></td>
@@ -284,11 +300,10 @@ GSTIN: 27RFIPS3270C1Z0 | Phone: 7020005481
 
 </table>
 
-
 <br>
 
 <b>Amount in Words:</b><br>
-Rupees {{bill.total_amount|round|int}} Only
+Rupees {{amount_words}} Only
 
 
 <!-- FOOTER -->
@@ -296,33 +311,23 @@ Rupees {{bill.total_amount|round|int}} Only
 <div class="footer">
 
 <div class="bank">
-
 <b>Bank Details</b><br>
-
 Bank: Bank of Maharashtra<br>
 Branch: Anjangaon (Amravati)<br>
 A/C No: 60548064146<br>
 IFSC: MAHB0000911
-
 </div>
 
 <div>
-
 For SR STEEL<br><br><br>
-
 Authorised Signatory
-
 </div>
 
 </div>
-
 
 <div class="declaration">
-
 <b>Declaration:</b><br>
-
 We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
-
 </div>
 
 <div style="text-align:center;margin-top:10px;font-size:11px">
@@ -335,15 +340,10 @@ This is a Computer Generated Invoice
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
-
 function downloadPDF(){
-
 const element=document.querySelector(".container");
-
 html2pdf().from(element).save("invoice_{{bill.id}}.pdf");
-
 }
-
 </script>
 
 </body>

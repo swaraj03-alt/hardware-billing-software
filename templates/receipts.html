@@ -77,13 +77,27 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
 .btn-clear{ color: #64748b; text-decoration: none; font-size: 13px; font-weight: 600; }
 
 /* TABLE UI */
-.data-box{
-    background:white; padding:25px; border-radius:24px;
-    box-shadow: var(--card-shadow); overflow: hidden;
+.erp-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    table-layout: fixed;
 }
-.erp-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+
+.erp-table th,
+.erp-table td {
+    word-wrap: break-word;
+}
+
+.data-box{
+    background:white;
+    padding:25px;
+    border-radius:24px;
+    box-shadow: var(--card-shadow);
+    overflow-x:hidden;
+}
 .erp-table th{ padding:12px 20px; font-size:11px; color:#94a3b8; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
-.erp-table td{ padding:16px 20px; background: #fbfcfd; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; font-weight:600; font-size: 14px;}
+.erp-table td{ padding:16px 20px; background: #fbfcfd; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; font-weight:600; font-size: 14px; vertical-align: top;}
 .erp-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
 .erp-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
 
@@ -93,9 +107,22 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
 .status-pending { background: #fee2e2; color: #991b1b; }
 .type-badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 11px; }
 
+.gst-box{
+    font-size:11px;
+    color:#475569;
+    line-height:1.6;
+}
+.gst-box div{
+    margin-bottom:2px;
+}
+.muted{
+    color:#94a3b8;
+    font-size:11px;
+}
+
 /* ACTIONS */
 .action-group { display: flex; gap: 12px; justify-content: flex-end; }
-.icon-btn { font-size: 18px; color: #94a3b8; transition: 0.2s; text-decoration: none;}
+.icon-btn { font-size: 18px; color: #94a3b8; transition: 0.2s; text-decoration: none; cursor:pointer;}
 .icon-btn.whatsapp { color: #22c55e; }
 .icon-btn.view { color: var(--primary); }
 .icon-btn.delete { color: #cbd5e1; }
@@ -110,10 +137,12 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
 @media (max-width: 768px) {
     .filter-form { flex-direction: column; align-items: stretch; }
     .date-group { flex-direction: column; align-items: stretch; }
+    .erp-table { min-width: 100%; }
     .erp-table thead { display: none; }
     .erp-table tr { display: block; margin-bottom: 15px; border: 1px solid #f1f5f9; border-radius: 15px; background: white; padding: 10px;}
-    .erp-table td { display: flex; justify-content: space-between; align-items: center; border: none !important; padding: 10px 5px; }
-    .erp-table td::before { content: attr(data-label); color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .erp-table td { display: flex; justify-content: space-between; align-items: flex-start; border: none !important; padding: 10px 5px; gap:15px; }
+    .erp-table td::before { content: attr(data-label); color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; min-width: 110px; }
+    .action-group{ justify-content:flex-start; }
 }
 </style>
 </head>
@@ -149,18 +178,28 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
         <form method="get" class="filter-form">
             <div class="search-input-wrap">
                 <i class="fas fa-search"></i>
-                <input name="q" placeholder="Search Customer Name or Mobile..." value="{{request.args.q}}">
+                <input name="q" placeholder="Search Customer Name / Mobile / Bill ID..." value="{{ request.args.get('q','') }}">
             </div>
+
             <div class="date-group">
-                <input type="date" name="from" value="{{request.args.from}}">
+                <input type="date" name="from" value="{{ request.args.get('from','') }}">
                 <span style="font-size: 12px; font-weight: 700; color: #94a3b8;">TO</span>
-                <input type="date" name="to" value="{{request.args.to}}">
+                <input type="date" name="to" value="{{ request.args.get('to','') }}">
             </div>
+
+            <select name="type">
+                <option value="">Type: All</option>
+                <option value="REGULAR" {% if request.args.get('type') == 'REGULAR' %}selected{% endif %}>Regular</option>
+                <option value="GST" {% if request.args.get('type') == 'GST' %}selected{% endif %}>GST</option>
+                <option value="ESTIMATE" {% if request.args.get('type') == 'ESTIMATE' %}selected{% endif %}>Estimate</option>
+            </select>
+
             <select name="status">
                 <option value="">Status: All</option>
-                <option value="DONE">Paid (Nill)</option>
-                <option value="BAKI">Baki (Pending)</option>
+                <option value="DONE" {% if request.args.get('status') == 'DONE' %}selected{% endif %}>Paid (Nill)</option>
+                <option value="BAKI" {% if request.args.get('status') == 'BAKI' %}selected{% endif %}>Baki (Pending)</option>
             </select>
+
             <button type="submit" class="btn-search">SEARCH</button>
             <a href="/receipts" class="btn-clear">Clear</a>
         </form>
@@ -174,7 +213,7 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
                     <th>Customer Details</th>
                     <th>Type</th>
                     <th>Amount</th>
-                    <th>Status</th>
+                     <th>Status</th>
                     <th style="text-align:right">Actions</th>
                 </tr>
             </thead>
@@ -182,43 +221,65 @@ body{ background:var(--bg); color:var(--dark); overflow-x:hidden; }
                 {% for b in bills %}
                 <tr>
                     <td data-label="Date & ID">
-                        <div style="font-weight: 700;">{{ b.created_at.strftime("%d %b %Y") }}</div>
-                        <div style="font-size: 11px; color: #94a3b8;">#{{ b.id }}</div>
+                        <div style="font-weight:700;">{{ b.created_at.strftime("%d %b %Y") if b.created_at else '' }}</div>
+                        <div style="font-size:11px; color:#94a3b8;">#{{ b.id }}</div>
                     </td>
-                    <td data-label="Customer">
-                        <div style="font-weight: 700;">{{ b.customer_name }}</div>
-                        <div style="font-size: 11px; color: #94a3b8;"><i class="fas fa-phone"></i> {{ b.customer_mobile }}</div>
+
+                    <td data-label="Customer Details">
+                        <div style="font-weight:700;">{{ b.customer_name }}</div>
+                        <div style="font-size:11px; color:#94a3b8;">
+                            <i class="fas fa-phone"></i> {{ b.customer_mobile }}
+                        </div>
+                        {% if b.buyer_gstin %}
+                        <div style="font-size:11px; color:#64748b; margin-top:4px;">
+                            <i class="fas fa-file-invoice"></i> GSTIN: {{ b.buyer_gstin }}
+                        </div>
+                        {% endif %}
                     </td>
+
                     <td data-label="Type">
                         <span class="type-badge">{{ b.bill_type }}</span>
                     </td>
+
                     <td data-label="Amount">
-                        <div style="font-weight: 800; color: var(--dark);">₹ {{ b.total_amount }}</div>
-                        {% if b.balance_amount > 0 %}
-                        <div style="font-size: 11px; color: var(--danger);">Baki: ₹{{ b.balance_amount }}</div>
+                        <div style="font-weight:800; color:var(--dark);">₹ {{ "%.2f"|format(b.total_amount or 0) }}</div>
+                        <div class="muted">Paid: ₹ {{ "%.2f"|format(b.paid_amount or 0) }}</div>
+                        {% if b.balance_amount and b.balance_amount > 0 %}
+                        <div style="font-size:11px; color:var(--danger);">Baki: ₹ {{ "%.2f"|format(b.balance_amount or 0) }}</div>
                         {% endif %}
                     </td>
+
+
                     <td data-label="Status">
-                        {% if b.status == 'DONE' or b.balance_amount == 0 %}
+                        {% if b.status == 'DONE' or (b.balance_amount or 0) == 0 %}
                         <span class="status-pill status-paid">● FULLY PAID</span>
                         {% else %}
                         <span class="status-pill status-pending">● PENDING</span>
                         {% endif %}
                     </td>
+
                     <td data-label="Actions">
                         <div class="action-group">
-                            <a href="/print-bill/{{b.id}}" target="_blank" class="icon-btn view" title="View Bill"><i class="fas fa-file-invoice"></i></a>
-                            <a href="https://wa.me/91{{b.customer_mobile}}?text=Invoice%20#{{b.id}}" class="icon-btn whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                            <form action="/delete-bill/{{b.id}}" method="POST"
-                          style="display:inline;"
-                          onsubmit="return confirm('Delete this bill?')">
+                            <a href="/print-bill/{{ b.id }}" target="_blank" class="icon-btn view" title="View Bill">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
 
-                    <button type="submit" class="icon-btn delete" style="border:none;background:none;">
-                    <i class="fas fa-trash-alt"></i>
-                    </button>
+                            <a href="https://wa.me/91{{ b.customer_mobile }}?text=Invoice%20%23{{ b.id }}" class="icon-btn whatsapp" title="WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
 
-                    </form>
-                         </div>
+                            <form action="/delete-bill/{{ b.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this bill?')">
+                                <button type="submit" class="icon-btn delete" style="border:none;background:none;">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:30px; background:white; border:none; color:#94a3b8;">
+                        No receipts found.
                     </td>
                 </tr>
                 {% endfor %}

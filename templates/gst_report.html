@@ -9,469 +9,480 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-
 :root{
---primary:#3b82f6;
---dark:#1e293b;
---success:#10b981;
---bg:#f8fafc;
---muted:#64748b;
---sidebar-w:260px;
+    --primary:#3b82f6;
+    --dark:#1e293b;
+    --success:#10b981;
+    --bg:#f8fafc;
+    --muted:#64748b;
+    --sidebar-w:260px;
 }
-
+*{box-sizing:border-box;}
 body{
-margin:0;
-font-family:'Plus Jakarta Sans',sans-serif;
-background:var(--bg);
+    margin:0;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg);
+    color:var(--dark);
 }
-
-.wrapper{
-display:flex;
-}
-
+.wrapper{display:flex;}
 .content{
-margin-left:var(--sidebar-w);
-padding:30px;
-width:100%;
+    margin-left:var(--sidebar-w);
+    padding:24px;
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
 }
-
-/* HEADER */
-
 .header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:25px;
-flex-wrap:wrap;
-gap:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:15px;
 }
-
 .header-left{
-display:flex;
-gap:15px;
-align-items:center;
+    display:flex;
+    gap:15px;
+    align-items:center;
 }
-
 .icon{
-width:50px;
-height:50px;
-border-radius:12px;
-background:#6366f1;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:20px;
+    width:50px;
+    height:50px;
+    border-radius:12px;
+    background:#6366f1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:20px;
 }
-
 .header h1{
-margin:0;
-font-size:22px;
+    margin:0;
+    font-size:22px;
 }
-
 .header-right{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }
-
-/* BUTTON */
-
 .btn{
-padding:10px 14px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:600;
-font-size:14px;
-text-decoration:none;
-display:inline-flex;
-align-items:center;
-gap:6px;
+    padding:10px 14px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
-
 .btn-primary{background:var(--primary);color:white;}
 .btn-dark{background:#1e293b;color:white;}
 .btn-green{background:#10b981;color:white;}
 
-/* FILTER */
-
 .filter-bar{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-margin-bottom:25px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
 }
-
 .filter-bar select,
 .filter-bar input{
-padding:10px;
-border:1px solid #e2e8f0;
-border-radius:8px;
+    padding:10px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#fff;
 }
-
-/* STATS */
 
 .stats{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:20px;
-margin-bottom:25px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;
+    margin-bottom:20px;
 }
-
 .card{
-background:white;
-padding:20px;
-border-radius:16px;
-box-shadow:0 8px 18px rgba(0,0,0,0.05);
+    background:white;
+    padding:18px;
+    border-radius:16px;
+    box-shadow:0 8px 18px rgba(0,0,0,0.05);
 }
-
 .card .label{
-font-size:12px;
-color:var(--muted);
-text-transform:uppercase;
+    font-size:12px;
+    color:var(--muted);
+    text-transform:uppercase;
 }
-
 .card .value{
-font-size:26px;
-font-weight:800;
-margin-top:5px;
+    font-size:24px;
+    font-weight:800;
+    margin-top:5px;
 }
-
-/* TABLE */
 
 .table-box{
-background:white;
-border-radius:16px;
-box-shadow:0 8px 18px rgba(0,0,0,0.05);
+    background:white;
+    border-radius:16px;
+    box-shadow:0 8px 18px rgba(0,0,0,0.05);
+    overflow:hidden;
 }
-
 .table-header{
-padding:16px 20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-border-bottom:1px solid #f1f5f9;
+    padding:16px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #f1f5f9;
+    gap:10px;
+    flex-wrap:wrap;
 }
-
 .table-header input{
-padding:8px 12px;
-border:1px solid #e2e8f0;
-border-radius:8px;
+    padding:8px 12px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
 }
 
 .table-wrap{
-overflow-x:auto;
+    width:100%;
+    overflow-x:auto;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
-min-width:700px;
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
 }
-
 th{
-background:#f8fafc;
-padding:14px 20px;
-text-align:left;
-font-size:12px;
-color:var(--muted);
+    background:#f8fafc;
+    padding:12px 10px;
+    text-align:left;
+    font-size:11px;
+    color:var(--muted);
+    white-space:normal;
 }
-
 td{
-padding:14px 20px;
-border-bottom:1px solid #f1f5f9;
+    padding:12px 10px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:13px;
+    vertical-align:top;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
 }
-
 tr:hover{
-background:#f1f5f9;
+    background:#f8fafc;
 }
+.text-right{text-align:right;}
 
-.text-right{
-text-align:right;
-}
-
-/* RESPONSIVE */
+th:nth-child(1), td:nth-child(1){width:9%;}
+th:nth-child(2), td:nth-child(2){width:8%;}
+th:nth-child(3), td:nth-child(3){width:18%;}
+th:nth-child(4), td:nth-child(4){width:11%;}
+th:nth-child(5), td:nth-child(5){width:10%;}
+th:nth-child(6), td:nth-child(6){width:8%;}
+th:nth-child(7), td:nth-child(7){width:9%;}
+th:nth-child(8), td:nth-child(8){width:7%;}
+th:nth-child(9), td:nth-child(9){width:7%;}
+th:nth-child(10), td:nth-child(10){width:7%;}
+th:nth-child(11), td:nth-child(11){width:9%;}
+th:nth-child(12), td:nth-child(12){width:9%;}
 
 @media(max-width:1024px){
-.content{
-margin-left:0;
-padding:20px;
-}
+    .content{
+        margin-left:0;
+        padding:16px;
+    }
+    table{
+        min-width:900px;
+    }
 }
 
 @media(max-width:600px){
-
-.header{
-flex-direction:column;
-align-items:flex-start;
-}
-
-.header-right{
-width:100%;
-}
-
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+    .header-right{
+        width:100%;
+    }
+    .btn{
+        font-size:13px;
+        padding:9px 12px;
+    }
 }
 
 /* PRINT */
+@page{
+    size:A4 landscape;
+    margin:10mm;
+}
 
 @media print{
-.sidebar,
-.filter-bar,
-.header-right,
-.table-header input{
-display:none!important;
-}
+    body{
+        background:#fff;
+    }
 
-.content{
-margin-left:0;
-padding:0;
-}
+    .sidebar,
+    .filter-bar,
+    .header-right,
+    .table-header input{
+        display:none !important;
+    }
 
-}
+    .wrapper,
+    .content{
+        margin:0 !important;
+        padding:0 !important;
+        width:100% !important;
+        overflow:visible !important;
+    }
 
+    .table-box,
+    .card,
+    .header{
+        box-shadow:none !important;
+        border:none !important;
+    }
+
+    .stats{
+        grid-template-columns:repeat(5,1fr);
+        gap:8px;
+        margin-bottom:10px;
+    }
+
+    .card{
+        padding:10px;
+        border:1px solid #ddd !important;
+        border-radius:6px;
+    }
+
+    .card .label{
+        font-size:10px;
+    }
+
+    .card .value{
+        font-size:16px;
+    }
+
+    .table-header{
+        padding:8px 0;
+        border-bottom:1px solid #ddd;
+    }
+
+    .table-wrap{
+        overflow:visible !important;
+    }
+
+    table{
+        width:100% !important;
+        table-layout:fixed;
+        font-size:10px;
+    }
+
+    th, td{
+        padding:6px 4px !important;
+        font-size:10px !important;
+    }
+
+    th{
+        background:#f3f4f6 !important;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+    }
+
+    tr{
+        page-break-inside:avoid;
+    }
+}
 </style>
 </head>
-
 <body>
-
 <div class="wrapper">
-
 {% include 'sidebar.html' %}
-
 <div class="content">
 
-<!-- HEADER -->
-
 <div class="header">
+    <div class="header-left">
+        <div class="icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+            <h1>GST Report</h1>
+            <small>
+                {% if report_type == "purchase" %}
+                    GST Purchase Register
+                {% else %}
+                    GST Sales Register
+                {% endif %}
+            </small>
+        </div>
+    </div>
 
-<div class="header-left">
+    <div class="header-right">
+        <a href="/gst-report?report=sale" class="btn btn-primary">
+            <i class="fas fa-chart-line"></i> Sale
+        </a>
 
-<div class="icon">
-<i class="fas fa-file-invoice-dollar"></i>
+        <a href="/gst-report?report=purchase" class="btn btn-dark">
+            <i class="fas fa-shopping-cart"></i> Purchase
+        </a>
+
+        <button type="button" onclick="window.print()" class="btn btn-dark">
+            <i class="fas fa-print"></i> Print
+        </button>
+
+        <a href="/gst-report-excel?report={{ report_type }}&type={{ filter_type }}&month={{ month }}&date={{ date_filter }}&year={{ year }}&week={{ week }}" class="btn btn-green">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+    </div>
 </div>
-
-<div>
-<h1>GST Report</h1>
-<small>
-
-{% if report_type=="purchase" %}
-GST Purchase Register
-{% else %}
-GST Sales Register
-{% endif %}
-
-</small>
-</div>
-
-</div>
-
-<div class="header-right">
-
-<a href="/gst-report?report=sale" class="btn btn-primary">
-<i class="fas fa-chart-line"></i> Sale
-</a>
-
-<a href="/gst-report?report=purchase" class="btn btn-dark">
-<i class="fas fa-shopping-cart"></i> Purchase
-</a>
-
-<button onclick="window.print()" class="btn btn-dark">
-<i class="fas fa-print"></i> Print
-</button>
-
-<a href="/gst-report-excel?report={{report_type}}" class="btn btn-green">
-<i class="fas fa-file-excel"></i> Excel
-</a>
-
-</div>
-
-</div>
-
-<!-- FILTER -->
 
 <form method="GET" action="/gst-report" class="filter-bar">
+    <input type="hidden" name="report" value="{{ report_type }}">
 
-<input type="hidden" name="report" value="{{report_type}}">
+    <select name="type" onchange="toggleFilter(this.value)">
+        <option value="month" {% if filter_type == 'month' %}selected{% endif %}>Month</option>
+        <option value="date" {% if filter_type == 'date' %}selected{% endif %}>Date</option>
+        <option value="year" {% if filter_type == 'year' %}selected{% endif %}>Year</option>
+        <option value="week" {% if filter_type == 'week' %}selected{% endif %}>Week</option>
+    </select>
 
-<select name="type" onchange="toggleFilter(this.value)">
-<option value="month">Month</option>
-<option value="date">Date</option>
-<option value="year">Year</option>
-<option value="week">Week</option>
-</select>
+    <input type="month" name="month" id="f-month" value="{{ month }}">
+    <input type="date" name="date" id="f-date" value="{{ date_filter }}" style="display:none">
+    <input type="number" name="year" id="f-year" placeholder="Year" value="{{ year }}" style="display:none">
+    <input type="number" name="week" id="f-week" placeholder="Week" value="{{ week }}" style="display:none">
 
-<input type="month" name="month" id="f-month">
-
-<input type="date" name="date" id="f-date" style="display:none">
-
-<input type="number" name="year" id="f-year" placeholder="Year" style="display:none">
-
-<input type="number" name="week" id="f-week" placeholder="Week" style="display:none">
-
-<button type="submit" class="btn btn-primary">
-<i class="fas fa-filter"></i> Apply
-</button>
-
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-filter"></i> Apply
+    </button>
 </form>
 
-<!-- STATS -->
-
 <div class="stats">
-
-<div class="card">
-<div class="label">Taxable Value</div>
-<div class="value">₹{{ "{:,.2f}".format(taxable) }}</div>
+    <div class="card">
+        <div class="label">Taxable Value</div>
+        <div class="value">₹{{ "{:,.2f}".format(taxable) }}</div>
+    </div>
+    <div class="card">
+        <div class="label">CGST</div>
+        <div class="value">₹{{ "{:,.2f}".format(cgst_total) }}</div>
+    </div>
+    <div class="card">
+        <div class="label">SGST</div>
+        <div class="value">₹{{ "{:,.2f}".format(sgst_total) }}</div>
+    </div>
+    <div class="card">
+        <div class="label">IGST</div>
+        <div class="value">₹{{ "{:,.2f}".format(igst_total) }}</div>
+    </div>
+    <div class="card">
+        <div class="label">Grand Total</div>
+        <div class="value">₹{{ "{:,.2f}".format(grand) }}</div>
+    </div>
 </div>
-
-<div class="card">
-<div class="label">Total GST</div>
-<div class="value">₹{{ "{:,.2f}".format(tax) }}</div>
-</div>
-
-<div class="card">
-<div class="label">Grand Total</div>
-<div class="value">₹{{ "{:,.2f}".format(grand) }}</div>
-</div>
-
-</div>
-
-<!-- TABLE -->
 
 <div class="table-box">
+    <div class="table-header">
+        <h3>GST Invoices</h3>
+        <input type="text" id="search" placeholder="Search..." onkeyup="filterTable()">
+    </div>
 
-<div class="table-header">
-<h3>GST Invoices</h3>
+    <div class="table-wrap">
+        <table id="gstTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>{{ 'Bill' if report_type == 'sale' else 'ID' }}</th>
+                    <th>{% if report_type == "purchase" %}Supplier / Product{% else %}Customer{% endif %}</th>
+                    {% if report_type == "sale" %}
+                    <th>GSTIN</th>
+                    {% endif %}
+                    <th>Tax Type</th>
+                    <th>GST %</th>
+                    <th>Taxable</th>
+                    <th>CGST</th>
+                    <th>SGST</th>
+                    <th>IGST</th>
+                    <th>Total GST</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
 
-<input type="text" id="search" placeholder="Search..." onkeyup="filterTable()">
-</div>
-
-<div class="table-wrap">
-
-<table id="gstTable">
-
-<thead>
-
-<tr>
-
-<th>Date</th>
-<th>Bill</th>
-
-<th>
-{% if report_type=="purchase" %}
-Supplier / Product
-{% else %}
-Customer
-{% endif %}
-</th>
-
-<th>Taxable</th>
-<th>CGST</th>
-<th>SGST</th>
-
-<th class="text-right">Total</th>
-
-</tr>
-
-</thead>
-
-<tbody id="gstBody">
-
-{% if report_type == "sale" %}
-
-{% for b in rows %}
-
-<tr>
-
-<td>{{ b.bill_date.strftime('%d-%m-%Y') }}</td>
-
-<td>#{{ b.bill_id }}</td>
-
-<td>{{ b.customer_name }}</td>
-
-<td>₹{{ "{:,.2f}".format(b.taxable or 0) }}</td>
-
-<td>₹{{ "{:,.2f}".format(b.cgst or 0) }}</td>
-
-<td>₹{{ "{:,.2f}".format(b.sgst or 0) }}</td>
-
-<td class="text-right">₹{{ "{:,.2f}".format(b.total or 0) }}</td>
-
-</tr>
-
-{% endfor %}
-{% else %}
-
-{% for p in rows %}
-
-<tr>
-
-<td>{{ p.bill_date.strftime('%d-%m-%Y') }}</td>
-
-<td>#{{ p.id }}</td>
-
-<td>{{ p.supplier_name or p.product_name }}</td>
-
-<td>₹{{ "{:,.2f}".format(p.taxable or 0) }}</td>
-
-<td>₹{{ "{:,.2f}".format(p.cgst or 0) }}</td>
-
-<td>₹{{ "{:,.2f}".format(p.sgst or 0) }}</td>
-
-<td class="text-right">₹{{ "{:,.2f}".format(p.total or 0) }}</td>
-
-</tr>
-
-{% endfor %}
-{% endif %}
-
-</tbody>
-
-</table>
-
-</div>
-
+            <tbody id="gstBody">
+                {% if report_type == "sale" %}
+                    {% for b in rows %}
+                    <tr>
+                        <td>{{ b.bill_date.strftime('%d-%m-%Y') if b.bill_date else '' }}</td>
+                        <td>#{{ b.bill_id }}</td>
+                        <td>{{ b.customer_name }}</td>
+                        <td>{{ b.buyer_gstin or '' }}</td>
+                        <td>{{ b.tax_type or '' }}</td>
+                        <td>{{ "{:,.2f}".format(b.gst_percent or 0) }}%</td>
+                        <td>₹{{ "{:,.2f}".format(b.taxable or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(b.cgst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(b.sgst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(b.igst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(b.gst_total or 0) }}</td>
+                        <td class="text-right">₹{{ "{:,.2f}".format(b.total or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12" style="text-align:center;">No sale records found.</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% for p in rows %}
+                    <tr>
+                        <td>{{ p.bill_date.strftime('%d-%m-%Y') if p.bill_date else '' }}</td>
+                        <td>#{{ p.id }}</td>
+                        <td>{{ (p.supplier_name or '') ~ (' / ' if p.supplier_name and p.product_name else '') ~ (p.product_name or '') }}</td>
+                        <td>{{ p.tax_type or '' }}</td>
+                        <td>{{ "{:,.2f}".format(p.gst_percent or 0) }}%</td>
+                        <td>₹{{ "{:,.2f}".format(p.taxable or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(p.cgst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(p.sgst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(p.igst or 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(p.gst_total or 0) }}</td>
+                        <td class="text-right">₹{{ "{:,.2f}".format(p.total or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" style="text-align:center;">No purchase records found.</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 </div>
 </div>
 
 <script>
-
 function toggleFilter(type){
+    document.getElementById("f-month").style.display = "none";
+    document.getElementById("f-date").style.display = "none";
+    document.getElementById("f-year").style.display = "none";
+    document.getElementById("f-week").style.display = "none";
 
-document.getElementById("f-month").style.display="none";
-document.getElementById("f-date").style.display="none";
-document.getElementById("f-year").style.display="none";
-document.getElementById("f-week").style.display="none";
-
-if(type==="month") document.getElementById("f-month").style.display="block";
-if(type==="date") document.getElementById("f-date").style.display="block";
-if(type==="year") document.getElementById("f-year").style.display="block";
-
-if(type==="week"){
-document.getElementById("f-week").style.display="block";
-document.getElementById("f-year").style.display="block";
-}
-
+    if(type === "month") document.getElementById("f-month").style.display = "block";
+    if(type === "date") document.getElementById("f-date").style.display = "block";
+    if(type === "year") document.getElementById("f-year").style.display = "block";
+    if(type === "week"){
+        document.getElementById("f-week").style.display = "block";
+        document.getElementById("f-year").style.display = "block";
+    }
 }
 
 function filterTable(){
+    let input = document.getElementById("search").value.toUpperCase();
+    let tr = document.getElementById("gstBody").getElementsByTagName("tr");
 
-let input=document.getElementById("search").value.toUpperCase();
-
-let tr=document.getElementById("gstBody").getElementsByTagName("tr");
-
-for(let i=0;i<tr.length;i++){
-
-let txt=tr[i].innerText.toUpperCase();
-
-tr[i].style.display = txt.indexOf(input)>-1 ? "" : "none";
-
+    for(let i = 0; i < tr.length; i++){
+        let txt = tr[i].innerText.toUpperCase();
+        tr[i].style.display = txt.indexOf(input) > -1 ? "" : "none";
+    }
 }
 
-}
-
+document.addEventListener("DOMContentLoaded", function(){
+    toggleFilter("{{ filter_type }}");
+});
 </script>
 
 </body>

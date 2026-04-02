@@ -42,7 +42,15 @@ font-weight:700;
 color:#dc2626;
 font-weight:700;
 }
+.bill-link{
+color:#2563eb;
+text-decoration:none;
+font-weight:700;
+}
 
+.bill-link:hover{
+text-decoration:underline;
+}
 </style>
 
 </head>
@@ -129,9 +137,9 @@ Total Outstanding
 
 {% if t.bill_id %}
 
-<span class="fw-semibold">
-Bill #{{ t.bill_id }}
-</span>
+<a href="/print-bill/{{ t.bill_id }}" class="bill-link fw-semibold">
+    Bill #{{ t.bill_id }}
+</a>
 
 <br>
 

@@ -359,7 +359,7 @@ z-index:9999;
 <button type="button" class="btn btn-primary" onclick="addTempProduct()">
 <i class="fas fa-plus"></i> Add Item
 </button>
-<button type="button" class="btn btn-primary" onclick="openSupplierPayment()">
+<button type="button" class="btn btn-primary" onclick="submitInventoryForm()">
 Save
 </button>
 </form>
@@ -638,22 +638,7 @@ fetch(`/api/search-product?q=${encodeURIComponent(q)}`)
 
 });
 }
-function saveSupplierPayment(){
 
-alert("clicked");
-
-let supplierId = document.getElementById("paySupplierId").value;
-let amount = document.getElementById("payAmount").value;
-let method = document.getElementById("payMethod").value;
-
-document.addEventListener("click", function(e){
-
-    if(!input.contains(e.target)){
-        results.style.display = "none";
-    }
-
-});
-}
  document.getElementById("stockFilter").addEventListener("change", function(){
 
     let type = this.value;
@@ -739,18 +724,28 @@ alert("Please enter supplier name");
 return;
 }
 
-let purchase = parseFloat(document.querySelector("input[name='purchase_price']").value) || 0;
-let qty = parseFloat(document.querySelector("input[name='stock']").value) || 0;
+if(tempProducts.length === 0){
+alert("Please Click on add product then Save");
+return;
+}
 
-let totalPurchase = purchase * qty;
+let totalPurchase = 0;
+
+// calculate purchase for all products
+tempProducts.forEach(p=>{
+let purchase = parseFloat(p.purchase) || 0;
+let qty = parseFloat(p.qty) || 0;
+totalPurchase += purchase * qty;
+});
 
 document.getElementById("paySupplierId").value = supplierId;
 document.getElementById("paySupplierName").value = supplierName;
-
-document.getElementById("totalPurchase").value = totalPurchase;
-document.getElementById("balanceAmount").value = totalPurchase;
+document.getElementById("totalPaid").value = 0;
+document.getElementById("totalPurchase").value = totalPurchase.toFixed(2);
+document.getElementById("balanceAmount").value = totalPurchase.toFixed(2);
 document.getElementById("payAmount").value = "";
 
+document.getElementById("productsJson").value = JSON.stringify(tempProducts);
 document.getElementById("supplierPayModal").style.display = "flex";
 
 }
@@ -930,7 +925,23 @@ function removeTemp(i){
 tempProducts.splice(i,1);
 renderTempProducts();
 }
-</script>
 
+function submitInventoryForm() {
+    let supplierName = document.getElementById("supplierInput").value.trim();
+
+    if (!supplierName) {
+        alert("Please select supplier");
+        return;
+    }
+
+    if (tempProducts.length === 0) {
+        alert("Please click Add Item first");
+        return;
+    }
+
+    document.getElementById("productsJson").value = JSON.stringify(tempProducts);
+    document.getElementById("addForm").submit();
+}
+</script>
 </body>
 </html>
